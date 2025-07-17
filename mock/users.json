@@ -1,0 +1,28 @@
+{
+  "users": [
+    {
+      "first_name": "John",
+      "last_name": "Doe",
+      "email": "john.doe@email.com",
+      "phone_number": "+60123456789",
+      "dob": "1990-01-01",
+      "address": "123 Main St",
+      "user_type": "user",
+      "identity_token": "encrypted_token_here",
+      "kyc_status": "approved",
+      "registration_date": "2025-07-01"
+    },
+    {
+      "first_name": "Alice",
+      "last_name": "Smith",
+      "email": "alice.smith@doesbakery.com",
+      "phone_number": "+60123456781",
+      "dob": "1985-05-15",
+      "address": "789 Business Ave",
+      "user_type": "business_employee",
+      "identity_token": "encrypted_alice_token",
+      "kyc_status": "approved",
+      "registration_date": "2025-07-02"
+    }
+  ]
+}
