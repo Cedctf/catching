@@ -1,0 +1,157 @@
+{
+  "invoices": [
+    {
+      "user_identity_token": "encrypted_token_here",
+      "business_identity_token": "encrypted_business_token_here",
+      "invoice_number": "INV20250001",
+      "amount": 25.5,
+      "due_date": "2025-01-22",
+      "status": "paid",
+      "created_at": "2025-01-15T10:30:00Z"
+    },
+    {
+      "user_identity_token": "encrypted_token_here",
+      "business_identity_token": "encrypted_business_token_here",
+      "invoice_number": "INV20250002",
+      "amount": 20,
+      "due_date": "2025-07-24",
+      "status": "paid",
+      "created_at": "2025-07-17T17:40:08.902Z"
+    },
+    {
+      "user_identity_token": "encrypted_token_here",
+      "business_identity_token": "encrypted_business_token_here",
+      "invoice_number": "INV20250003",
+      "amount": 20,
+      "due_date": "2025-07-24",
+      "status": "paid",
+      "created_at": "2025-07-17T17:40:33.243Z"
+    },
+    {
+      "user_identity_token": "encrypted_token_here",
+      "business_identity_token": "encrypted_business_token_here",
+      "invoice_number": "INV20250004",
+      "amount": 11,
+      "due_date": "2025-07-24",
+      "status": "paid",
+      "created_at": "2025-07-17T17:43:28.941Z"
+    },
+    {
+      "user_identity_token": "encrypted_token_here",
+      "business_identity_token": "encrypted_business_token_here",
+      "invoice_number": "INV20250005",
+      "amount": 11,
+      "due_date": "2025-07-24",
+      "status": "paid",
+      "created_at": "2025-07-17T18:02:12.519Z"
+    },
+    {
+      "user_identity_token": "encrypted_token_here",
+      "business_identity_token": "encrypted_business_token_here",
+      "invoice_number": "INV20250006",
+      "amount": 11,
+      "due_date": "2025-07-24",
+      "status": "paid",
+      "created_at": "2025-07-17T18:02:12.527Z"
+    },
+    {
+      "user_identity_token": "encrypted_token_here",
+      "business_identity_token": "encrypted_business_token_here",
+      "invoice_number": "INV20250007",
+      "amount": 11,
+      "due_date": "2025-07-24",
+      "status": "paid",
+      "created_at": "2025-07-17T18:02:25.910Z"
+    },
+    {
+      "user_identity_token": "encrypted_token_here",
+      "business_identity_token": "encrypted_business_token_here",
+      "invoice_number": "INV20250008",
+      "amount": 11,
+      "due_date": "2025-07-24",
+      "status": "paid",
+      "created_at": "2025-07-17T18:02:25.926Z"
+    },
+    {
+      "user_identity_token": "encrypted_token_here",
+      "business_identity_token": "encrypted_business_token_here",
+      "invoice_number": "INV20250009",
+      "amount": 20,
+      "due_date": "2025-07-24",
+      "status": "paid",
+      "created_at": "2025-07-17T18:03:20.107Z"
+    },
+    {
+      "user_identity_token": "encrypted_token_here",
+      "business_identity_token": "encrypted_business_token_here",
+      "invoice_number": "INV20250010",
+      "amount": 20,
+      "due_date": "2025-07-24",
+      "status": "paid",
+      "created_at": "2025-07-17T18:03:20.116Z"
+    },
+    {
+      "user_identity_token": "encrypted_token_here",
+      "business_identity_token": "encrypted_business_token_here",
+      "invoice_number": "INV20250011",
+      "amount": 29,
+      "due_date": "2025-07-24",
+      "status": "paid",
+      "created_at": "2025-07-17T18:05:20.287Z"
+    },
+    {
+      "user_identity_token": "encrypted_token_here",
+      "business_identity_token": "encrypted_business_token_here",
+      "invoice_number": "INV20250012",
+      "amount": 29,
+      "due_date": "2025-07-24",
+      "status": "paid",
+      "created_at": "2025-07-17T18:05:20.300Z"
+    },
+    {
+      "user_identity_token": "encrypted_token_here",
+      "business_identity_token": "encrypted_business_token_here",
+      "invoice_number": "INV20250013",
+      "amount": 27,
+      "due_date": "2025-07-24",
+      "status": "paid",
+      "created_at": "2025-07-17T18:25:44.758Z"
+    },
+    {
+      "user_identity_token": "encrypted_token_here",
+      "business_identity_token": "encrypted_business_token_here",
+      "invoice_number": "INV20250014",
+      "amount": 27,
+      "due_date": "2025-07-24",
+      "status": "paid",
+      "created_at": "2025-07-17T18:25:44.766Z"
+    },
+    {
+      "user_identity_token": "encrypted_token_here",
+      "business_identity_token": "encrypted_business_token_here",
+      "invoice_number": "INV20250015",
+      "amount": 20,
+      "due_date": "2025-07-24",
+      "status": "paid",
+      "created_at": "2025-07-17T18:28:11.481Z"
+    },
+    {
+      "user_identity_token": "encrypted_token_here",
+      "business_identity_token": "encrypted_business_token_here",
+      "invoice_number": "INV20250016",
+      "amount": 20,
+      "due_date": "2025-07-24",
+      "status": "paid",
+      "created_at": "2025-07-17T18:28:11.492Z"
+    },
+    {
+      "user_identity_token": "encrypted_token_here",
+      "business_identity_token": "encrypted_business_token_here",
+      "invoice_number": "INV20250017",
+      "amount": 88,
+      "due_date": "2025-07-24",
+      "status": "paid",
+      "created_at": "2025-07-17T18:36:15.155Z"
+    }
+  ]
+}
