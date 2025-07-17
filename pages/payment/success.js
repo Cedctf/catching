@@ -36,8 +36,10 @@ export default function PaymentSuccess() {
       if (response.ok) {
         const data = await response.json();
         setInvoiceData(data);
-        // Auto-send email after invoice data is loaded
-        autoSendEmail(data, invoiceNumber);
+        // Auto-send email after invoice data is loaded with delay
+        setTimeout(() => {
+          autoSendEmail(data, invoiceNumber);
+        }, 3000); // Wait 3 seconds for component to fully render
       }
     } catch (error) {
       console.error('Error fetching invoice data:', error);
@@ -52,7 +54,7 @@ export default function PaymentSuccess() {
       const pdfData = await generatePDF();
       
       // Auto-send to a default email (you can modify this logic)
-      const defaultEmail = 'loyqunjie@gmail.com'; // Replace with actual customer email
+      const defaultEmail = 'cedricctf11a@gmail.com'; // Replace with actual customer email
       
       const response = await fetch('/api/send-invoice-email', {
         method: 'POST',
@@ -135,7 +137,22 @@ export default function PaymentSuccess() {
       
       const imgWidth = 210;
       const pageHeight = 295;
+      // Debug canvas and calculation
+      console.log('Canvas info:', {
+        width: canvas.width,
+        height: canvas.height,
+        imgWidth: imgWidth
+      });
+      
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      console.log('Calculated imgHeight:', imgHeight);
+      
+      // Validate imgHeight before using it
+      if (!imgHeight || imgHeight <= 0 || isNaN(imgHeight) || !isFinite(imgHeight)) {
+        throw new Error(`Invalid imgHeight: ${imgHeight} (canvas: ${canvas.width}x${canvas.height})`);
+      }
+      
       let heightLeft = imgHeight;
       let position = 0;
 
