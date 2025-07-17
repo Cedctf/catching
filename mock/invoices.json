@@ -99,6 +99,16 @@
       "status": "paid",
       "created_at": "2025-07-17T20:15:40.038Z",
       "weekday": "Friday"
+    },
+    {
+      "user_identity_token": "demo_user_token",
+      "business_identity_token": "demo_business_token",
+      "invoice_number": "INV20250011",
+      "amount": 24,
+      "due_date": "2025-07-24",
+      "status": "paid",
+      "created_at": "2025-07-17T22:37:43.174Z",
+      "weekday": "Friday"
     }
   ]
 }

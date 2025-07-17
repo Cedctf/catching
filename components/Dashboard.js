@@ -27,7 +27,8 @@ import {
   Filter,
   CreditCard as PaymentIcon,
   Building,
-  ChevronDown
+  ChevronDown,
+  Scan
 } from 'lucide-react';
 import { useRouter } from 'next/router';
 
@@ -391,10 +392,11 @@ const Dashboard = () => {
             backgroundColor: "rgba(0, 47, 167, 0.05)"
           }} 
           whileTap={{ scale: 0.95 }} 
+          onClick={() => router.push('/payment/start')}
           className="h-24 flex flex-col items-center justify-center gap-2 bg-white border border-gray-200 rounded-2xl transition-all duration-200 text-gray-700 hover:border-[#002fa7]/30"
         >
-          <QrCode className="h-6 w-6" />
-          <span className="font-medium">Scan QR</span>
+          <Scan className="h-6 w-6" />
+          <span className="font-medium">Scan</span>
         </motion.button>
         <motion.button 
           whileHover={{ 

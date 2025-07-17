@@ -1,6 +1,18 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import Image from 'next/image';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Camera, 
+  QrCode, 
+  CreditCard, 
+  DollarSign, 
+  ArrowRight, 
+  X, 
+  CheckCircle,
+  AlertCircle,
+  Loader2,
+  Scan
+} from 'lucide-react';
 
 export default function PaymentStart() {
   const router = useRouter();
@@ -53,53 +65,66 @@ export default function PaymentStart() {
     }
   };
 
-  useEffect(() => {
-    return () => {
-      stopCamera();
-    };
-  }, []);
-
-  const simulateFaceScan = () => {
-    setIsProcessing(true);
-    setScanProgress(0);
-    
-    // Simulate progressive face scanning
-    const progressInterval = setInterval(() => {
-      setScanProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(progressInterval);
-          setTimeout(() => {
-            stopCamera();
-            processPayment();
-          }, 500);
-          return 100;
-        }
-        return prev + 10;
-      });
-    }, 200);
+  const simulateFaceScan = async () => {
+    try {
+      if (processingRef.current) return;
+      processingRef.current = true;
+      
+      setIsProcessing(true);
+      setScanProgress(0);
+      setCameraError(null);
+      
+      for (let i = 0; i <= 100; i += 10) {
+        setScanProgress(i);
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }
+      
+      await processPayment();
+    } catch (error) {
+      console.error('Face scan error:', error);
+      setCameraError(error.message || 'Face scan failed. Please try again.');
+      setIsProcessing(false);
+      setScanProgress(0);
+    } finally {
+      processingRef.current = false;
+    }
   };
 
-  const simulateQRScan = () => {
-    setIsProcessing(true);
-    // Simulate QR scan delay
-    setTimeout(() => {
-      processPayment();
-    }, 2000);
+  const simulateQRScan = async () => {
+    try {
+      if (processingRef.current) return;
+      processingRef.current = true;
+      
+      setIsProcessing(true);
+      setScanProgress(0);
+      setCameraError(null);
+      
+      for (let i = 0; i <= 100; i += 20) {
+        setScanProgress(i);
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
+      
+      await processPayment();
+    } catch (error) {
+      console.error('QR scan error:', error);
+      setCameraError(error.message || 'QR scan failed. Please try again.');
+      setIsProcessing(false);
+      setScanProgress(0);
+    } finally {
+      processingRef.current = false;
+    }
   };
 
   const processPayment = async () => {
-    // Prevent duplicate processing
-    if (processingRef.current || paymentProcessed) {
-      console.log('Payment already being processed, skipping...');
-      return;
-    }
-
-    processingRef.current = true;
-    setPaymentProcessed(true);
-
     try {
-      console.log('Processing payment...', { amount, paymentMethod });
-      
+      if (!amount || parseFloat(amount) <= 0) {
+        throw new Error('Invalid payment amount');
+      }
+
+      if (!paymentMethod) {
+        throw new Error('Payment method not selected');
+      }
+
       const response = await fetch('/api/payment/process', {
         method: 'POST',
         headers: {
@@ -107,125 +132,182 @@ export default function PaymentStart() {
         },
         body: JSON.stringify({
           amount: parseFloat(amount),
-          paymentMethod,
-          payerToken: 'encrypted_token_here', // John Doe's token
-          receiverToken: 'encrypted_business_token_here', // Doe's Bakery token
+          paymentMethod: paymentMethod.toUpperCase(),
         }),
       });
 
-      const result = await response.json();
-      console.log('Payment result:', result);
-      
-      if (result.success) {
-        router.push(`/payment/success?txnId=${result.transactionId}&amount=${amount}&method=${paymentMethod}`);
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setPaymentProcessed(true);
+        
+        setTimeout(() => {
+          router.push(`/payment/success?transactionId=${data.transactionId}`);
+        }, 2000);
       } else {
-        alert('Payment failed. Please try again.');
-        resetPaymentState();
+        throw new Error(data.message || 'Payment processing failed');
       }
     } catch (error) {
       console.error('Payment error:', error);
-      alert('Payment failed. Please try again.');
-      resetPaymentState();
+      const errorMessage = error.message || 'Payment processing failed. Please try again.';
+      setCameraError(errorMessage);
+      setIsProcessing(false);
+      setScanProgress(0);
     }
   };
 
-  const resetPaymentState = () => {
-    setIsProcessing(false);
+  const resetPayment = () => {
+    setPaymentMethod('');
     setShowFaceScan(false);
     setShowQRScan(false);
+    setIsProcessing(false);
+    setScanProgress(0);
     setPaymentProcessed(false);
-    processingRef.current = false;
+    setCameraError(null);
     stopCamera();
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <div className="max-w-md mx-auto pt-8">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Catching Pay</h1>
-          <p className="text-gray-600">Secure and instant payments</p>
-        </div>
+  useEffect(() => {
+    return () => {
+      stopCamera();
+    };
+  }, []);
 
-        {/* Payment Form */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-6 text-center">Make Payment</h2>
-          
+  const cardVariants = {
+    hidden: { opacity: 0, y: 50, rotateX: 15 },
+    visible: {
+      opacity: 1, y: 0, rotateX: 0,
+      transition: { duration: 0.8, ease: [0.25, 0.4, 0.25, 1] }
+    }
+  };
+
+  const modalVariants = {
+    hidden: { opacity: 0, scale: 0.8 },
+    visible: { opacity: 1, scale: 1 },
+    exit: { opacity: 0, scale: 0.8 }
+  };
+
+  return (
+    <div className="relative w-full max-w-7xl mx-auto px-6 py-8 space-y-6">
+      {/* Header */}
+      <header className="text-center">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Payment Gateway</h1>
+        <p className="text-gray-600">Secure and fast payment processing</p>
+      </header>
+
+      {/* Main Payment Form */}
+      <div className="max-w-md mx-auto">
+        <motion.div
+          variants={cardVariants}
+          initial="hidden"
+          animate="visible"
+          className="bg-white border border-gray-200 rounded-3xl shadow-lg p-6 space-y-6"
+        >
           {/* Amount Input */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Amount (RM)
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              Payment Amount
             </label>
-            <input
-              type="number"
-              step="0.01"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
-              placeholder="0.00"
-              disabled={isProcessing}
-            />
+            <div className="relative">
+              <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <input
+                type="number"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="0.00"
+                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#002fa7]/30 focus:border-[#002fa7]/20 transition-all duration-200 text-lg"
+              />
+            </div>
           </div>
 
           {/* Payment Method Selection */}
-          {!showFaceScan && !showQRScan && (
+          {!paymentMethod && (
             <div className="space-y-4">
-              <h3 className="text-lg font-medium text-gray-900">Choose Payment Method</h3>
-              
-              <button
-                onClick={() => handlePaymentMethodSelect('face')}
-                disabled={!amount || isProcessing}
-                className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                    <span className="text-2xl">👤</span>
-                  </div>
-                  <div className="text-left">
-                    <div className="font-medium">Pay with Face</div>
-                    <div className="text-sm text-gray-500">Secure facial recognition</div>
-                  </div>
-                </div>
-              </button>
-
-              <button
-                onClick={() => handlePaymentMethodSelect('qr')}
-                disabled={!amount || isProcessing}
-                className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                    <span className="text-2xl">📱</span>
-                  </div>
-                  <div className="text-left">
-                    <div className="font-medium">Scan QR Code</div>
-                    <div className="text-sm text-gray-500">Quick QR payment</div>
-                  </div>
-                </div>
-              </button>
+              <h3 className="text-lg font-semibold text-gray-900">Choose Payment Method</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => handlePaymentMethodSelect('face')}
+                  disabled={!amount || parseFloat(amount) <= 0}
+                  className="p-4 bg-[#002fa7] hover:bg-[#002fa7]/90 text-white rounded-xl transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Camera className="h-6 w-6 mx-auto mb-2" />
+                  <span className="text-sm font-medium">Face Scan</span>
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => handlePaymentMethodSelect('qr')}
+                  disabled={!amount || parseFloat(amount) <= 0}
+                  className="p-4 bg-[#002fa7] hover:bg-[#002fa7]/90 text-white rounded-xl transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <QrCode className="h-6 w-6 mx-auto mb-2" />
+                  <span className="text-sm font-medium">QR Code</span>
+                </motion.button>
+              </div>
             </div>
           )}
 
-          {/* Face Scan Simulation */}
-          {showFaceScan && (
-            <div className="text-center">
-              {/* Camera Preview */}
-              <div className="relative w-80 h-60 mx-auto mb-4 bg-gray-900 rounded-lg overflow-hidden">
-                {cameraError ? (
-                  <div className="flex items-center justify-center h-full text-white">
-                    <div className="text-center">
-                      <div className="text-4xl mb-2">📷</div>
-                      <p className="text-sm">{cameraError}</p>
-                      <button
-                        onClick={startCamera}
-                        className="mt-2 px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
-                      >
-                        Try Again
-                      </button>
-                    </div>
+          {/* Reset Button */}
+          {paymentMethod && (
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={resetPayment}
+              className="w-full flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-4 rounded-xl transition-colors duration-200"
+            >
+              <X className="h-4 w-4" />
+              <span>Change Payment Method</span>
+            </motion.button>
+          )}
+        </motion.div>
+      </div>
+
+      {/* Face Scan Modal */}
+      <AnimatePresence>
+        {showFaceScan && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          >
+            <motion.div
+              variants={modalVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              className="bg-white rounded-3xl p-6 max-w-md w-full space-y-6"
+            >
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">Face Recognition</h3>
+                <button
+                  onClick={resetPayment}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <X className="h-5 w-5 text-gray-500" />
+                </button>
+              </div>
+
+              {cameraError ? (
+                <div className="text-center space-y-4">
+                  <div className="p-4 bg-red-100 rounded-full w-fit mx-auto">
+                    <AlertCircle className="h-8 w-8 text-red-600" />
                   </div>
-                ) : (
-                  <>
+                  <p className="text-red-600">{cameraError}</p>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={startCamera}
+                    className="bg-[#002fa7] hover:bg-[#002fa7]/90 text-white font-medium py-2 px-4 rounded-xl transition-colors duration-200"
+                  >
+                    Try Again
+                  </motion.button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="relative bg-gray-100 rounded-xl overflow-hidden aspect-video">
                     <video
                       ref={videoRef}
                       autoPlay
@@ -233,147 +315,111 @@ export default function PaymentStart() {
                       muted
                       className="w-full h-full object-cover"
                     />
-                    {/* Face Detection Overlay */}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className={`w-48 h-48 border-2 rounded-full transition-colors duration-300 ${
-                        scanProgress > 0 ? 'border-green-400' : 'border-blue-400'
-                      }`}>
-                        <div className="w-full h-full rounded-full border-2 border-dashed border-white opacity-50"></div>
-                      </div>
-                    </div>
-                    {/* Scan Progress Indicator */}
                     {isProcessing && (
-                      <div className="absolute bottom-4 left-4 right-4">
-                        <div className="bg-black bg-opacity-50 rounded-lg p-2">
-                          <div className="text-white text-sm mb-1">Scanning face... {scanProgress}%</div>
-                          <div className="w-full bg-gray-600 rounded-full h-2">
-                            <div 
-                              className="bg-green-400 h-2 rounded-full transition-all duration-200" 
-                              style={{width: `${scanProgress}%`}}
-                            ></div>
-                          </div>
+                      <div className="absolute inset-0 bg-[#002fa7]/20 flex items-center justify-center">
+                        <div className="text-center space-y-2">
+                          <Loader2 className="h-8 w-8 animate-spin text-white mx-auto" />
+                          <p className="text-white font-medium">Processing... {scanProgress}%</p>
                         </div>
                       </div>
                     )}
-                  </>
+                  </div>
+                  
+                  {!isProcessing && !paymentProcessed && (
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={simulateFaceScan}
+                      className="w-full bg-[#002fa7] hover:bg-[#002fa7]/90 text-white font-medium py-3 px-4 rounded-xl transition-colors duration-200 flex items-center justify-center gap-2"
+                    >
+                      <Scan className="h-5 w-5" />
+                      <span>Start Face Scan</span>
+                    </motion.button>
+                  )}
+
+                  {paymentProcessed && (
+                    <div className="text-center space-y-4">
+                      <div className="p-4 bg-green-100 rounded-full w-fit mx-auto">
+                        <CheckCircle className="h-8 w-8 text-green-600" />
+                      </div>
+                      <p className="text-green-600 font-medium">Payment Successful!</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* QR Scan Modal */}
+      <AnimatePresence>
+        {showQRScan && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          >
+            <motion.div
+              variants={modalVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              className="bg-white rounded-3xl p-6 max-w-md w-full space-y-6"
+            >
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">QR Code Payment</h3>
+                <button
+                  onClick={resetPayment}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <X className="h-5 w-5 text-gray-500" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="relative bg-gray-100 rounded-xl p-8 aspect-square flex items-center justify-center">
+                  <QrCode className="h-32 w-32 text-gray-400" />
+                  {isProcessing && (
+                    <div className="absolute inset-0 bg-[#002fa7]/20 flex items-center justify-center rounded-xl">
+                      <div className="text-center space-y-2">
+                        <Loader2 className="h-8 w-8 animate-spin text-[#002fa7] mx-auto" />
+                        <p className="text-[#002fa7] font-medium">Scanning... {scanProgress}%</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <p className="text-center text-gray-600 text-sm">
+                  Scan this QR code with your mobile banking app
+                </p>
+                
+                {!isProcessing && !paymentProcessed && (
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={simulateQRScan}
+                    className="w-full bg-[#002fa7] hover:bg-[#002fa7]/90 text-white font-medium py-3 px-4 rounded-xl transition-colors duration-200 flex items-center justify-center gap-2"
+                  >
+                    <QrCode className="h-5 w-5" />
+                    <span>Simulate QR Scan</span>
+                  </motion.button>
+                )}
+
+                {paymentProcessed && (
+                  <div className="text-center space-y-4">
+                    <div className="p-4 bg-green-100 rounded-full w-fit mx-auto">
+                      <CheckCircle className="h-8 w-8 text-green-600" />
+                    </div>
+                    <p className="text-green-600 font-medium">Payment Successful!</p>
+                  </div>
                 )}
               </div>
-              
-              <h3 className="text-lg font-medium mb-2">Face Recognition Payment</h3>
-              <p className="text-gray-600 mb-4">
-                {isProcessing ? 'Analyzing facial features...' : 'Position your face within the circle'}
-              </p>
-              
-              {!isProcessing && !cameraError && (
-                <div className="space-y-3">
-                  <button
-                    onClick={simulateFaceScan}
-                    className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    Start Face Scan
-                  </button>
-                  <div>
-                    <button
-                      onClick={() => {
-                        setShowFaceScan(false);
-                        stopCamera();
-                        setPaymentMethod('');
-                      }}
-                      className="text-gray-500 hover:text-gray-700 text-sm"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              )}
-              
-              {isProcessing && (
-                <div className="text-blue-600 font-medium">
-                  {scanProgress < 100 ? 'Scanning...' : 'Processing payment...'}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* QR Scan Simulation */}
-          {showQRScan && (
-            <div className="text-center">
-              {/* Mock QR Code */}
-              <div className="w-64 h-64 mx-auto mb-4 bg-white border-2 border-gray-300 rounded-lg p-4 flex items-center justify-center">
-                <div className="w-full h-full bg-black relative">
-                  {/* QR Code Pattern Simulation */}
-                  <div className="absolute inset-2 grid grid-cols-8 gap-1">
-                    {Array.from({ length: 64 }, (_, i) => (
-                      <div
-                        key={i}
-                        className={`${
-                          Math.random() > 0.5 ? 'bg-black' : 'bg-white'
-                        } w-full h-full`}
-                      />
-                    ))}
-                  </div>
-                  {/* Corner markers */}
-                  <div className="absolute top-1 left-1 w-6 h-6 border-2 border-white bg-black"></div>
-                  <div className="absolute top-1 right-1 w-6 h-6 border-2 border-white bg-black"></div>
-                  <div className="absolute bottom-1 left-1 w-6 h-6 border-2 border-white bg-black"></div>
-                </div>
-              </div>
-              
-              {/* QR Code Info */}
-              <div className="bg-gray-50 rounded-lg p-4 mb-4 text-left max-w-sm mx-auto">
-                <h4 className="font-medium text-gray-900 mb-2">Payment Details</h4>
-                <div className="text-sm text-gray-600 space-y-1">
-                  <div>Merchant: Doe's Bakery</div>
-                  <div>Amount: RM {amount}</div>
-                  <div>Payment ID: QR-{Date.now().toString().slice(-6)}</div>
-                </div>
-              </div>
-              
-              <h3 className="text-lg font-medium mb-2">QR Code Payment</h3>
-              <p className="text-gray-600 mb-4">
-                {isProcessing ? 'Processing QR payment...' : 'Scan the QR code above to complete payment'}
-              </p>
-              
-              {!isProcessing && (
-                <div className="space-y-3">
-                  <button
-                    onClick={simulateQRScan}
-                    className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"
-                  >
-                    Simulate QR Scan
-                  </button>
-                  <div>
-                    <button
-                      onClick={() => {
-                        setShowQRScan(false);
-                        setPaymentMethod('');
-                      }}
-                      className="text-gray-500 hover:text-gray-700 text-sm"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              )}
-              
-              {isProcessing && (
-                <div className="text-green-600 font-medium">
-                  <div className="animate-pulse">Processing QR payment...</div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Back Button */}
-        <button
-          onClick={() => router.push('/')}
-          className="w-full text-gray-600 hover:text-gray-800 py-2"
-          disabled={isProcessing}
-        >
-          ← Back to Home
-        </button>
-      </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

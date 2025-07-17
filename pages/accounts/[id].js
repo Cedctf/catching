@@ -62,7 +62,17 @@ const AccountDetailsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
   if (!account) {
-    return <div>Loading...</div>;
+    return (
+      <div className="relative w-full max-w-7xl mx-auto px-6 py-8">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            className="w-8 h-8 border-2 border-[#002fa7] border-t-transparent rounded-full"
+          />
+        </div>
+      </div>
+    );
   }
 
   const filteredTransactions = mockTransactions.filter(tx => {
@@ -74,8 +84,16 @@ const AccountDetailsPage = () => {
     return true;
   });
 
+  const cardVariants = {
+    hidden: { opacity: 0, y: 50, rotateX: 15 },
+    visible: {
+      opacity: 1, y: 0, rotateX: 0,
+      transition: { duration: 0.8, ease: [0.25, 0.4, 0.25, 1] }
+    }
+  };
+
   return (
-    <div className="relative w-full max-w-7xl space-y-6">
+    <div className="relative w-full max-w-7xl mx-auto px-6 py-8 space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
         <button 
@@ -91,256 +109,209 @@ const AccountDetailsPage = () => {
 
       {/* Account Summary Card */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="p-6 bg-blue-500/10 backdrop-blur-xl border border-blue-400/20 rounded-3xl"
+        variants={cardVariants}
+        initial="hidden"
+        animate="visible"
+        className="bg-white border border-gray-200 rounded-3xl shadow-lg p-6"
       >
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Balance Section */}
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-blue-100/80">Current Balance</h3>
-              <div className="flex gap-2">
-                <button className="p-2 bg-blue-500/10 hover:bg-blue-500/20 rounded-xl transition-colors">
-                  <QrCode className="h-4 w-4" />
-                </button>
-                <button className="p-2 bg-blue-500/10 hover:bg-blue-500/20 rounded-xl transition-colors">
-                  <Plus className="h-4 w-4" />
-                </button>
-                <button className="p-2 bg-blue-500/10 hover:bg-blue-500/20 rounded-xl transition-colors">
-                  <Settings className="h-4 w-4" />
-                </button>
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-[#002fa7]/10 rounded-xl">
+                <DollarSign className="h-6 w-6 text-[#002fa7]" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Current Balance</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {showBalances ? formatAccountBalance(account.balance) : '••••••'}
+                </p>
               </div>
             </div>
-            <div className="text-3xl font-bold">
-              {showBalances ? formatAccountBalance(account.balance, account.currency) : '••••'}
-            </div>
-            <div className="flex items-center gap-2 text-sm text-blue-200/60">
-              <Clock className="h-4 w-4" />
-              Last updated: {new Date(account.lastSync).toLocaleString()}
-            </div>
-          </div>
-
-          {/* Account Details */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-blue-100/80">Account Info</h3>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm">
-                <Building className="h-4 w-4 text-blue-300/70" />
-                <span className="text-blue-200/60">Type:</span>
-                <span>{account.type}</span>
+            
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-green-100 rounded-xl">
+                <Building className="h-6 w-6 text-green-600" />
               </div>
-              <div className="flex items-center gap-2 text-sm">
-                <CreditCard className="h-4 w-4 text-blue-300/70" />
-                <span className="text-blue-200/60">Account:</span>
-                <span>{account.accountNumber || account.accountId}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <Globe className="h-4 w-4 text-blue-300/70" />
-                <span className="text-blue-200/60">Currency:</span>
-                <span>{account.currency}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <Phone className="h-4 w-4 text-blue-300/70" />
-                <span className="text-blue-200/60">Phone:</span>
-                <span>+60 12-345 6789</span>
+              <div>
+                <p className="text-sm text-gray-600">Account Type</p>
+                <p className="font-medium text-gray-900">{account.type}</p>
               </div>
             </div>
           </div>
 
-          {/* Quick Stats */}
+          {/* Status Section */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-blue-100/80">This Month</h3>
-            <div className="space-y-3">
-              <div className="p-3 bg-blue-500/5 rounded-xl">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <ArrowDownLeft className="h-4 w-4 text-green-400" />
-                    <span className="text-sm text-blue-200/60">Income</span>
-                  </div>
-                  <span className="text-green-400">+{formatAccountBalance(15000, account.currency)}</span>
-                </div>
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-purple-100 rounded-xl">
+                <Check className="h-6 w-6 text-purple-600" />
               </div>
-              <div className="p-3 bg-blue-500/5 rounded-xl">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <ArrowUpRight className="h-4 w-4 text-red-400" />
-                    <span className="text-sm text-blue-200/60">Expenses</span>
-                  </div>
-                  <span className="text-red-400">-{formatAccountBalance(8500, account.currency)}</span>
-                </div>
+              <div>
+                <p className="text-sm text-gray-600">Status</p>
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                  account.status === 'Active' 
+                    ? 'bg-green-100 text-green-800' 
+                    : 'bg-gray-100 text-gray-800'
+                }`}>
+                  {account.status}
+                </span>
               </div>
             </div>
+            
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-orange-100 rounded-xl">
+                <Clock className="h-6 w-6 text-orange-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Last Sync</p>
+                <p className="text-sm text-gray-900">{account.lastSync}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Actions Section */}
+          <div className="space-y-3">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="w-full flex items-center gap-2 bg-[#002fa7] hover:bg-[#002fa7]/90 text-white font-medium py-3 px-4 rounded-xl transition-colors duration-200"
+            >
+              <QrCode className="h-5 w-5" />
+              <span>Generate QR</span>
+            </motion.button>
+            
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="w-full flex items-center gap-2 bg-white hover:bg-gray-50 text-gray-700 font-medium py-3 px-4 rounded-xl transition-colors duration-200 border border-gray-200"
+            >
+              <Settings className="h-5 w-5" />
+              <span>Settings</span>
+            </motion.button>
           </div>
         </div>
       </motion.div>
 
       {/* Transactions Section */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-blue-500/5 backdrop-blur-xl border border-blue-400/20 rounded-3xl overflow-hidden"
+        variants={cardVariants}
+        initial="hidden"
+        animate="visible"
+        className="bg-white border border-gray-200 rounded-3xl shadow-lg overflow-hidden"
       >
         {/* Tabs */}
-        <div className="flex border-b border-blue-400/20">
+        <div className="flex border-b border-gray-200">
           <button
             onClick={() => setActiveTab('all')}
             className={`py-4 px-6 text-sm font-medium transition-colors relative ${
-              activeTab === 'all' ? 'text-white' : 'text-blue-200/60 hover:text-white'
+              activeTab === 'all' ? 'text-[#002fa7]' : 'text-gray-600 hover:text-gray-900'
             }`}
           >
             All Transactions
             {activeTab === 'all' && (
               <motion.div
                 layoutId="activeTab"
-                className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-400"
+                className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#002fa7]"
               />
             )}
           </button>
           <button
             onClick={() => setActiveTab('incoming')}
             className={`py-4 px-6 text-sm font-medium transition-colors relative ${
-              activeTab === 'incoming' ? 'text-white' : 'text-blue-200/60 hover:text-white'
+              activeTab === 'incoming' ? 'text-[#002fa7]' : 'text-gray-600 hover:text-gray-900'
             }`}
           >
             Incoming
             {activeTab === 'incoming' && (
               <motion.div
                 layoutId="activeTab"
-                className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-400"
+                className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#002fa7]"
               />
             )}
           </button>
           <button
             onClick={() => setActiveTab('outgoing')}
             className={`py-4 px-6 text-sm font-medium transition-colors relative ${
-              activeTab === 'outgoing' ? 'text-white' : 'text-blue-200/60 hover:text-white'
+              activeTab === 'outgoing' ? 'text-[#002fa7]' : 'text-gray-600 hover:text-gray-900'
             }`}
           >
             Outgoing
             {activeTab === 'outgoing' && (
               <motion.div
                 layoutId="activeTab"
-                className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-400"
+                className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#002fa7]"
               />
             )}
           </button>
         </div>
 
         {/* Filters */}
-        <div className="p-4 border-b border-blue-400/20 space-y-4">
-          {/* Search and Date Range */}
-          <div className="flex gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-blue-300/50" />
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex flex-wrap gap-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
                 type="text"
                 placeholder="Search transactions..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-blue-500/10 border border-blue-400/20 rounded-xl text-white placeholder-blue-300/50 focus:outline-none focus:ring-2 focus:ring-blue-400/50"
+                className="pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#002fa7]/30 focus:border-[#002fa7]/20 transition-all duration-200"
               />
             </div>
-            <div className="relative">
-              <select
-                value={dateRange}
-                onChange={(e) => setDateRange(e.target.value)}
-                className="appearance-none bg-blue-500/10 border border-blue-400/20 rounded-xl text-sm text-blue-200 pl-9 pr-8 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400/50"
-              >
-                <option value="all">All Time</option>
-                <option value="today">Today</option>
-                <option value="week">This Week</option>
-                <option value="month">This Month</option>
-                <option value="year">This Year</option>
-              </select>
-              <Calendar className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-4 w-4 text-blue-300/70" />
-            </div>
-          </div>
-
-          {/* Amount Range and Category */}
-          <div className="flex gap-4">
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <DollarSign className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-4 w-4 text-blue-300/70" />
-                <input
-                  type="number"
-                  placeholder="Min"
-                  value={amountMin}
-                  onChange={(e) => setAmountMin(e.target.value)}
-                  className="pl-9 pr-4 py-2 bg-blue-500/10 border border-blue-400/20 rounded-xl text-sm text-white placeholder-blue-300/50 focus:outline-none focus:ring-2 focus:ring-blue-400/50 w-32"
-                />
-              </div>
-              <span className="text-blue-200/60">to</span>
-              <div className="relative">
-                <DollarSign className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-4 w-4 text-blue-300/70" />
-                <input
-                  type="number"
-                  placeholder="Max"
-                  value={amountMax}
-                  onChange={(e) => setAmountMax(e.target.value)}
-                  className="pl-9 pr-4 py-2 bg-blue-500/10 border border-blue-400/20 rounded-xl text-sm text-white placeholder-blue-300/50 focus:outline-none focus:ring-2 focus:ring-blue-400/50 w-32"
-                />
-              </div>
-            </div>
-            <div className="relative flex-1">
-              <Tag className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-4 w-4 text-blue-300/70" />
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full appearance-none bg-blue-500/10 border border-blue-400/20 rounded-xl text-sm text-blue-200 pl-9 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400/50"
-              >
-                <option value="all">All Categories</option>
-                <option value="Salary">Salary</option>
-                <option value="Groceries">Groceries</option>
-                <option value="Shopping">Shopping</option>
-                <option value="Transfer">Transfer</option>
-                <option value="Bills">Bills</option>
-              </select>
-            </div>
+            
+            <select
+              value={dateRange}
+              onChange={(e) => setDateRange(e.target.value)}
+              className="px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#002fa7]/30 focus:border-[#002fa7]/20 transition-all duration-200"
+            >
+              <option value="all">All Time</option>
+              <option value="today">Today</option>
+              <option value="week">This Week</option>
+              <option value="month">This Month</option>
+            </select>
+            
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#002fa7]/30 focus:border-[#002fa7]/20 transition-all duration-200"
+            >
+              <option value="all">All Categories</option>
+              <option value="Salary">Salary</option>
+              <option value="Groceries">Groceries</option>
+              <option value="Utilities">Utilities</option>
+            </select>
           </div>
         </div>
 
-        {/* Transactions Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead className="text-xs text-blue-200/60 uppercase">
-              <tr>
-                <th scope="col" className="px-6 py-3">Transaction ID</th>
-                <th scope="col" className="px-6 py-3">Date & Time</th>
-                <th scope="col" className="px-6 py-3">Amount</th>
-                <th scope="col" className="px-6 py-3">Payee/Merchant</th>
-                <th scope="col" className="px-6 py-3">Category</th>
-                <th scope="col" className="px-6 py-3">Description</th>
-                <th scope="col" className="px-6 py-3">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredTransactions.map((tx) => (
-                <tr key={tx.id} className="border-b border-blue-400/10 hover:bg-blue-500/10 transition-colors">
-                  <td className="px-6 py-4 font-medium">{tx.id}</td>
-                  <td className="px-6 py-4">{new Date(tx.date).toLocaleString()}</td>
-                  <td className={`px-6 py-4 font-semibold ${
-                    tx.type === 'incoming' ? 'text-green-400' : 'text-red-400'
-                  }`}>
-                    {tx.type === 'incoming' ? '+' : '-'}{formatAccountBalance(tx.amount, account.currency)}
-                  </td>
-                  <td className="px-6 py-4">{tx.payee}</td>
-                  <td className="px-6 py-4">
-                    <span className="px-2 py-1 bg-blue-500/10 rounded-full text-xs">
-                      {tx.category}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">{tx.description}</td>
-                  <td className="px-6 py-4">
-                    <span className="flex items-center gap-1 text-green-400">
-                      <Check className="h-4 w-4" />
-                      {tx.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        {/* Transaction List */}
+        <div className="p-6">
+          <div className="space-y-4">
+            {filteredTransactions.map((transaction) => (
+              <div key={transaction.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                <div className="flex items-center gap-4">
+                  <div className="p-2 bg-white rounded-xl border border-gray-200">
+                    {transaction.type === 'incoming' ? (
+                      <ArrowDownLeft className="h-5 w-5 text-green-500" />
+                    ) : (
+                      <ArrowUpRight className="h-5 w-5 text-red-500" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">{transaction.description}</p>
+                    <p className="text-sm text-gray-500">{transaction.payee} • {transaction.category}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className={`font-semibold ${transaction.type === 'incoming' ? 'text-green-600' : 'text-red-600'}`}>
+                    {transaction.type === 'incoming' ? '+' : '-'}${transaction.amount.toFixed(2)}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    {new Date(transaction.date).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </motion.div>
     </div>

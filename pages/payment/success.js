@@ -1,34 +1,56 @@
 import { useRouter } from 'next/router';
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { 
+  CheckCircle, 
+  Download, 
+  Mail, 
+  ArrowRight, 
+  Receipt, 
+  Calendar,
+  CreditCard,
+  Building,
+  Loader2,
+  FileText
+} from 'lucide-react';
 import EInvoice from '../../components/EInvoice';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
 export default function PaymentSuccess() {
   const router = useRouter();
-  const { txnId, amount, method } = router.query;
+  const { transactionId } = router.query;
   const [transactionDetails, setTransactionDetails] = useState(null);
   const [invoiceData, setInvoiceData] = useState(null);
   const [emailSent, setEmailSent] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const invoiceRef = useRef();
 
   useEffect(() => {
-    if (txnId) {
-      // Fetch transaction details
-      fetch(`/api/payment/details?txnId=${txnId}`)
-        .then(res => res.json())
-        .then(data => {
-          setTransactionDetails(data);
-          // Fetch invoice data using the invoice number
-          if (data.invoiceNumber) {
-            fetchInvoiceData(data.invoiceNumber);
-          }
-        })
-        .catch(err => console.error('Error fetching transaction details:', err));
+    if (transactionId) {
+      fetchTransactionDetails();
     }
-  }, [txnId]);
+  }, [transactionId]);
+
+  const fetchTransactionDetails = async () => {
+    try {
+      const response = await fetch(`/api/payment/details?txnId=${transactionId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setTransactionDetails(data);
+        
+        if (data.invoiceNumber) {
+          await fetchInvoiceData(data.invoiceNumber);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching transaction details:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchInvoiceData = async (invoiceNumber) => {
     try {
@@ -36,10 +58,11 @@ export default function PaymentSuccess() {
       if (response.ok) {
         const data = await response.json();
         setInvoiceData(data);
-        // Auto-send email after invoice data is loaded with delay
+        
+        // Auto-send email after invoice data is loaded
         setTimeout(() => {
           autoSendEmail(data, invoiceNumber);
-        }, 3000); // Wait 3 seconds for component to fully render
+        }, 3000);
       }
     } catch (error) {
       console.error('Error fetching invoice data:', error);
@@ -47,25 +70,19 @@ export default function PaymentSuccess() {
   };
 
   const autoSendEmail = async (invoice, invoiceNumber) => {
-    if (emailSent) return; // Prevent duplicate emails
+    if (emailSent) return;
     
     try {
-      // Generate PDF for email
-      const pdfData = await generatePDF();
+      const pdf = await generatePDF();
+      const pdfBlob = pdf.output('blob');
       
-      // Auto-send to a default email (you can modify this logic)
-      const defaultEmail = 'loyqunjie@gmail.com'; // Replace with actual customer email
-      
+      const formData = new FormData();
+      formData.append('email', 'loyqunjie@gmail.com');
+      formData.append('pdf', pdfBlob, 'invoice.pdf');
+
       const response = await fetch('/api/send-invoice-email', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: defaultEmail,
-          pdfData,
-          invoiceNumber: invoiceNumber,
-        }),
+        body: formData,
       });
 
       if (response.ok) {
@@ -79,15 +96,11 @@ export default function PaymentSuccess() {
 
   const generatePDF = async () => {
     const element = invoiceRef.current;
-    
-    // Create a clone of the element to avoid modifying the original
     const clonedElement = element.cloneNode(true);
     
-    // Apply inline styles to preserve exact styling
     const applyInlineStyles = (el) => {
       const computedStyle = window.getComputedStyle(el);
       
-      // Copy all computed styles to inline styles
       const stylesToCopy = [
         'backgroundColor', 'color', 'fontSize', 'fontFamily', 'fontWeight',
         'padding', 'margin', 'border', 'borderColor', 'borderWidth', 'borderStyle',
@@ -98,7 +111,6 @@ export default function PaymentSuccess() {
       stylesToCopy.forEach(prop => {
         const value = computedStyle.getPropertyValue(prop.replace(/([A-Z])/g, '-$1').toLowerCase());
         if (value && value !== 'initial' && value !== 'inherit') {
-          // Convert lab() colors to rgb() equivalents
           if (value.includes('lab(')) {
             if (prop === 'backgroundColor') {
               el.style[prop] = '#ffffff';
@@ -111,205 +123,288 @@ export default function PaymentSuccess() {
         }
       });
       
-      // Recursively apply to children
       Array.from(el.children).forEach(applyInlineStyles);
     };
     
-    // Temporarily add the cloned element to the DOM
     document.body.appendChild(clonedElement);
-    clonedElement.style.position = 'absolute';
-    clonedElement.style.left = '-9999px';
-    clonedElement.style.top = '0';
+    applyInlineStyles(clonedElement);
     
-    try {
-      applyInlineStyles(clonedElement);
-      
-      const canvas = await html2canvas(clonedElement, {
-        scale: 1.5,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
-        logging: false,
-      });
-
-      const imgData = canvas.toDataURL('image/jpeg', 0.8);
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      
-      const imgWidth = 210;
-      const pageHeight = 295;
-      // Debug canvas and calculation
-      console.log('Canvas info:', {
-        width: canvas.width,
-        height: canvas.height,
-        imgWidth: imgWidth
-      });
-      
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      
-      console.log('Calculated imgHeight:', imgHeight);
-      
-      // Validate imgHeight before using it
-      if (!imgHeight || imgHeight <= 0 || isNaN(imgHeight) || !isFinite(imgHeight)) {
-        throw new Error(`Invalid imgHeight: ${imgHeight} (canvas: ${canvas.width}x${canvas.height})`);
-      }
-      
-      let heightLeft = imgHeight;
-      let position = 0;
-
-      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-      }
-
-      return pdf.output('datauristring').split(',')[1]; // Return base64 string
-    } finally {
-      // Clean up: remove the cloned element
-      document.body.removeChild(clonedElement);
-    }
+    const canvas = await html2canvas(clonedElement, {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff'
+    });
+    
+    document.body.removeChild(clonedElement);
+    
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
+    
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+    const imgWidth = canvas.width;
+    const imgHeight = canvas.height;
+    const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+    const imgX = (pdfWidth - imgWidth * ratio) / 2;
+    const imgY = 30;
+    
+    pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+    
+    return pdf;
   };
 
-  const handleDownloadPDF = async () => {
-    if (!invoiceData) return;
-    
+  const handleDownload = async () => {
     setIsDownloading(true);
     try {
-      const pdfData = await generatePDF();
-      
-      // Convert base64 back to blob and download
-      const byteCharacters = atob(pdfData);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: 'application/pdf' });
-      
-      // Create download link
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `invoice-${transactionDetails?.invoiceNumber || txnId}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      const pdf = await generatePDF();
+      pdf.save(`invoice-${transactionDetails?.invoiceNumber || 'receipt'}.pdf`);
     } catch (error) {
-      console.error('Error generating PDF:', error);
-      alert('Error generating PDF. Please try again.');
+      console.error('Error downloading PDF:', error);
     } finally {
       setIsDownloading(false);
     }
   };
 
-  const formatMethod = (method) => {
-    return method === 'face' ? 'Face Recognition' : 'QR Code';
+  const getInvoiceProps = () => {
+    if (!invoiceData) {
+      return {
+        companyInfo: {
+          name: 'Food Eatery Sdn Bhd',
+          address: '1st Floor, Palm Green, Kesari Street, 543210, Kuala Lumpur',
+          phone: '60312346789',
+          email: 'gretasolutions.com'
+        },
+        supplier: {
+          tin: 'E100000000030',
+          name: 'ABC Advisory Ltd',
+          regNo: 'NA',
+          sstId: 'NA',
+          address: '1, Street Avenue, NOP 123 England',
+          contact: '441234567890',
+          email: 'ABC advisory@gamil.com',
+          msic: '00000',
+          activity: 'NA'
+        },
+        buyer: {
+          tin: 'C987654321120',
+          regNo: '298021010000023',
+          sstId: 'L10-5621-78000000'
+        },
+        invoiceMeta: {
+          type: '01 - Invoice',
+          version: '1.0',
+          code: transactionDetails?.invoiceNumber || 'INV000001',
+          uid: '123456789-2024-4017344',
+          refNo: 'Not Applicable',
+          dateTime: new Date().toLocaleString('en-GB', { 
+            day: '2-digit', 
+            month: '2-digit', 
+            year: 'numeric', 
+            hour: '2-digit', 
+            minute: '2-digit', 
+            second: '2-digit' 
+          }),
+          validationDate: new Date(Date.now() + 24*60*60*1000).toLocaleString('en-GB', { 
+            day: '2-digit', 
+            month: '2-digit', 
+            year: 'numeric', 
+            hour: '2-digit', 
+            minute: '2-digit', 
+            second: '2-digit' 
+          })
+        },
+        items: [],
+        summary: {},
+        digitalSignature: '9e83e05bbf9b8dbac0deeec3bce6cba983f6dc50531c7a919f28d5fb369etc3',
+        qrCodeUrl: '',
+        notes: '',
+        showIllustrationBadge: false
+      };
+    }
+    
+    return {
+      ...invoiceData,
+      showIllustrationBadge: false
+    };
   };
 
+  const cardVariants = {
+    hidden: { opacity: 0, y: 50, rotateX: 15 },
+    visible: {
+      opacity: 1, y: 0, rotateX: 0,
+      transition: { duration: 0.8, ease: [0.25, 0.4, 0.25, 1] }
+    }
+  };
+
+  const successVariants = {
+    hidden: { scale: 0 },
+    visible: { 
+      scale: 1,
+      transition: { 
+        type: "spring",
+        stiffness: 200,
+        damping: 20
+      }
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="relative w-full max-w-7xl mx-auto px-6 py-8">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            className="w-8 h-8 border-2 border-[#002fa7] border-t-transparent rounded-full"
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 p-4">
-      <div className="max-w-md mx-auto pt-8">
-        {/* Success Animation */}
-        <div className="text-center mb-8">
-          <div className="w-20 h-20 mx-auto mb-4 bg-green-500 rounded-full flex items-center justify-center">
-            <span className="text-4xl text-white">✓</span>
-          </div>
+    <div className="relative w-full max-w-7xl mx-auto px-6 py-8 space-y-6">
+      {/* Success Animation */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-center space-y-4"
+      >
+        <motion.div
+          variants={successVariants}
+          initial="hidden"
+          animate="visible"
+          className="w-20 h-20 mx-auto bg-green-100 rounded-full flex items-center justify-center"
+        >
+          <CheckCircle className="h-12 w-12 text-green-600" />
+        </motion.div>
+        <div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Payment Successful!</h1>
-          <p className="text-gray-600">Thank you for using Catching</p>
+          <p className="text-gray-600">Your payment has been processed successfully</p>
         </div>
+      </motion.div>
 
-        {/* Transaction Details */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-6 text-center">Transaction Details</h2>
-          
-          <div className="space-y-4">
-            <div className="flex justify-between items-center py-2 border-b border-gray-100">
-              <span className="text-gray-600">Amount</span>
-              <span className="font-semibold text-lg">RM {amount}</span>
+      {/* Transaction Details */}
+      {transactionDetails && (
+        <motion.div
+          variants={cardVariants}
+          initial="hidden"
+          animate="visible"
+          className="bg-white border border-gray-200 rounded-3xl shadow-lg p-6"
+        >
+          <div className="space-y-6">
+            <div className="flex items-center gap-3 mb-6">
+              <Receipt className="h-6 w-6 text-[#002fa7]" />
+              <h2 className="text-xl font-semibold text-gray-900">Transaction Details</h2>
             </div>
             
-            <div className="flex justify-between items-center py-2 border-b border-gray-100">
-              <span className="text-gray-600">Payment Method</span>
-              <span className="font-medium">{formatMethod(method)}</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
+                  <div className="p-2 bg-[#002fa7]/10 rounded-lg">
+                    <Receipt className="h-5 w-5 text-[#002fa7]" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Transaction ID</p>
+                    <p className="font-mono text-gray-900">{transactionDetails.transaction_id}</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
+                  <div className="p-2 bg-green-100 rounded-lg">
+                    <Calendar className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Date & Time</p>
+                    <p className="font-medium text-gray-900">
+                      {new Date(transactionDetails.transaction_date).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
+                  <div className="p-2 bg-purple-100 rounded-lg">
+                    <CreditCard className="h-5 w-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Amount</p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {new Intl.NumberFormat('en-MY', {
+                        style: 'currency',
+                        currency: 'MYR',
+                      }).format(transactionDetails.amount)}
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
+                  <div className="p-2 bg-orange-100 rounded-lg">
+                    <Building className="h-5 w-5 text-orange-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Payment Method</p>
+                    <p className="font-medium text-gray-900 capitalize">
+                      {transactionDetails.payment_method}
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
             
-            <div className="flex justify-between items-center py-2 border-b border-gray-100">
-              <span className="text-gray-600">Transaction ID</span>
-              <span className="font-mono text-sm">{txnId}</span>
-            </div>
-            
-            <div className="flex justify-between items-center py-2 border-b border-gray-100">
-              <span className="text-gray-600">To</span>
-              <span className="font-medium">Doe's Bakery</span>
-            </div>
-            
-            <div className="flex justify-between items-center py-2 border-b border-gray-100">
-              <span className="text-gray-600">Date</span>
-              <span className="font-medium">{new Date().toLocaleDateString()}</span>
-            </div>
-            
-            <div className="flex justify-between items-center py-2">
-              <span className="text-gray-600">Status</span>
-              <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-                Completed
-              </span>
+            <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                <span className="text-sm text-gray-600">
+                  Status: <span className="font-medium text-green-600">Completed</span>
+                </span>
+              </div>
+              {emailSent && (
+                <div className="flex items-center gap-2 text-sm text-green-600">
+                  <Mail className="h-4 w-4" />
+                  <span>Receipt sent via email</span>
+                </div>
+              )}
             </div>
           </div>
-        </div>
+        </motion.div>
+      )}
 
-        {/* E-Invoice Section */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
-          <h3 className="text-lg font-semibold mb-4">E-Invoice Generated</h3>
-          <div className="bg-gray-50 p-4 rounded-lg mb-4">
-            <div className="text-sm text-gray-600 mb-2">Invoice Number</div>
-            <div className="font-mono font-medium">{transactionDetails?.invoiceNumber || 'Loading...'}</div>
-          </div>
-          
-          {/* Email Status */}
-          {emailSent && (
-            <div className="bg-green-50 border border-green-200 text-green-700 px-3 py-2 rounded-lg mb-4 text-sm">
-              Invoice emailed successfully!
-            </div>
-          )}
-          
-          <button 
-            onClick={handleDownloadPDF}
-            disabled={!invoiceData || isDownloading}
-            className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:bg-blue-300 transition-colors"
+      {/* Actions */}
+      <div className="flex flex-col sm:flex-row gap-4 justify-center">
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={handleDownload}
+          disabled={isDownloading}
+          className="flex items-center gap-2 bg-[#002fa7] hover:bg-[#002fa7]/90 text-white font-medium py-3 px-6 rounded-xl transition-colors duration-200 disabled:opacity-50"
+        >
+          {isDownloading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Download className="h-5 w-5" />}
+          <span>Download Receipt</span>
+        </motion.button>
+        
+        <Link href="/dashboard">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="flex items-center gap-2 bg-white hover:bg-gray-50 text-gray-700 font-medium py-3 px-6 rounded-xl transition-colors duration-200 border border-gray-200"
           >
-            {isDownloading ? 'Generating PDF...' : 'Download PDF Invoice'}
-          </button>
-        </div>
+            <ArrowRight className="h-5 w-5" />
+            <span>Back to Dashboard</span>
+          </motion.button>
+        </Link>
+      </div>
 
-        {/* Hidden EInvoice for PDF Generation */}
-        <div style={{ position: 'absolute', left: '-9999px', top: '0' }}>
-          <div ref={invoiceRef}>
-            {invoiceData && <EInvoice {...invoiceData} />}
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="space-y-3">
-          <Link href="/payment/start" className="block">
-            <button className="w-full bg-gray-900 text-white py-3 rounded-lg hover:bg-gray-800 transition-colors">
-              Make Another Payment
-            </button>
-          </Link>
-          
-          <Link href="/" className="block">
-            <button className="w-full border border-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-50 transition-colors">
-              Back to Home
-            </button>
-          </Link>
-        </div>
-
-        {/* Receipt Note */}
-        <div className="text-center mt-6 text-sm text-gray-500">
-          <p>{emailSent ? 'E-Invoice has been sent to your registered email' : 'Sending e-invoice to your email...'}</p>
+      {/* Invoice Preview (Hidden) */}
+      <div className="hidden">
+        <div ref={invoiceRef}>
+          <EInvoice {...getInvoiceProps()} />
         </div>
       </div>
     </div>

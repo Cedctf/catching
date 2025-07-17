@@ -15,7 +15,6 @@ import {
   Copy,
   Plus
 } from 'lucide-react';
-import Layout from '../components/Layout';
 
 // Helper function for consistent date formatting
 const formatDate = (dateString) => {
@@ -37,18 +36,33 @@ const SettingsPage = () => {
   const [activeSection, setActiveSection] = useState('identity');
   const [mounted, setMounted] = useState(false);
 
-  // Mock identity token data
+  // Identity token data from businesses.json
   const tokenData = {
-    token: "0x7f5d3f6a2c3b1e8d4a9c0b5e7f2d1c8a3b6e9f4",
-    lastUpdated: "2025-07-10T15:30:00Z",
+    token: "encrypted_user_token_here",
+    lastUpdated: "2025-07-05T00:00:00Z",
     businessAccounts: [
       {
-        businessName: "ABC Trading Co.",
-        logo: "/logos/abc.png",
+        businessName: "Doe's Bakery",
+        logo: "/logos/bakery.png",
         accountType: "Business Account",
-        status: "Active",
-        dateLinked: "2025-07-09T14:20:00Z",
-        location: "Kuala Lumpur, MY"
+        status: "approved",
+        dateLinked: "2025-07-05T00:00:00Z",
+        location: "456 Bakery St",
+        identity_token: "encrypted_business_token_here",
+        email: "info@doesbakery.com",
+        phone: "+60123456780",
+        employees: [
+          {
+            name: "Alice Smith",
+            role: "Manager",
+            email: "alice.smith@doesbakery.com"
+          },
+          {
+            name: "Bob Johnson",
+            role: "Cashier",
+            email: "bob.johnson@doesbakery.com"
+          }
+        ]
       }
     ]
   };
@@ -71,183 +85,240 @@ const SettingsPage = () => {
     navigator.clipboard.writeText(text);
   };
 
+  const cardVariants = {
+    hidden: { opacity: 0, y: 50, rotateX: 15 },
+    visible: {
+      opacity: 1, y: 0, rotateX: 0,
+      transition: { duration: 0.8, ease: [0.25, 0.4, 0.25, 1] }
+    }
+  };
+
   // Don't render dates until client-side
   if (!mounted) {
     return null;
   }
 
   return (
-    <Layout>
-      <div className="min-h-screen w-full flex flex-col items-center px-4 sm:px-6 md:px-8 pb-8 pt-28 overflow-hidden">
-        <div className="relative z-20 w-full max-w-7xl">
-          <div className="flex gap-8">
-            {/* Sidebar Navigation */}
-            <div className="w-64 shrink-0">
-              <div className="sticky top-28 space-y-1">
-                <button
-                  onClick={() => setActiveSection('profile')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
-                    activeSection === 'profile' ? 'bg-[#002fa7] text-white' : 'text-gray-600 hover:bg-gray-100'
-                  }`}
-                >
-                  <User className="h-5 w-5" />
-                  <span>Profile</span>
-                </button>
-                <button
-                  onClick={() => setActiveSection('security')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
-                    activeSection === 'security' ? 'bg-[#002fa7] text-white' : 'text-gray-600 hover:bg-gray-100'
-                  }`}
-                >
-                  <Lock className="h-5 w-5" />
-                  <span>Security</span>
-                </button>
-                <button
-                  onClick={() => setActiveSection('identity')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
-                    activeSection === 'identity' ? 'bg-[#002fa7] text-white' : 'text-gray-600 hover:bg-gray-100'
-                  }`}
-                >
-                  <Shield className="h-5 w-5" />
-                  <span>Identity Token</span>
-                </button>
-                <button
-                  onClick={() => setActiveSection('notifications')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
-                    activeSection === 'notifications' ? 'bg-[#002fa7] text-white' : 'text-gray-600 hover:bg-gray-100'
-                  }`}
-                >
-                  <Bell className="h-5 w-5" />
-                  <span>Notifications</span>
-                </button>
-                <button
-                  onClick={() => setActiveSection('preferences')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
-                    activeSection === 'preferences' ? 'bg-[#002fa7] text-white' : 'text-gray-600 hover:bg-gray-100'
-                  }`}
-                >
-                  <Globe className="h-5 w-5" />
-                  <span>Preferences</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Main Content */}
-            <div className="flex-1 space-y-8">
-              {/* Identity Token Section */}
-              <section
-                id="identity"
-                className={`space-y-6 ${activeSection !== 'identity' && 'hidden'}`}
-              >
-                <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold text-gray-900">Identity Token</h2>
-                </div>
-
-                {/* Token Display */}
-                <div className="bg-white border border-gray-200 rounded-2xl p-6 space-y-4 shadow-sm">
-                  <div className="space-y-2">
-                    <label className="text-sm text-gray-600">Your Identity Token</label>
-                    <div className="flex items-center gap-2">
-                      <code className="flex-1 font-mono bg-gray-50 px-4 py-2 rounded-xl text-gray-900">
-                        {tokenData.token}
-                      </code>
-                      <button
-                        onClick={() => copyToClipboard(tokenData.token)}
-                        className="p-2 hover:bg-gray-100 rounded-xl transition-colors text-gray-600"
-                      >
-                        <Copy className="h-5 w-5" />
-                      </button>
-                    </div>
-                    <p className="text-sm text-gray-500">
-                      Created by: {formatDate(tokenData.lastUpdated)}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Usage History */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-gray-900">Business Accounts</h3>
-                    <button className="text-sm text-[#002fa7] hover:text-blue-700 transition-colors">
-                      View All
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {tokenData.businessAccounts.map((business, index) => (
-                      <div
-                        key={index}
-                        className="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-md transition-all"
-                      >
-                        <div className="flex items-start gap-4">
-                          <img
-                            src={business.logo}
-                            alt={business.businessName}
-                            className="h-12 w-12 rounded-xl object-cover"
-                          />
-                          <div className="flex-1">
-                            <div className="flex items-start justify-between">
-                              <div>
-                                <h4 className="font-medium text-gray-900">{business.businessName}</h4>
-                                <p className="text-sm text-gray-600">{business.accountType}</p>
-                              </div>
-                              <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
-                                {business.status}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
-                              <Building className="h-4 w-4" />
-                              {business.location}
-                            </div>
-                            <p className="text-xs text-gray-500 mt-3">
-                              Linked on {formatDate(business.dateLinked)}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-
-                    {/* Create Business Account Box */}
-                    <button
-                      onClick={() => router.push('/business/create')}
-                      className="group border-2 border-dashed border-[#002fa7]/20 hover:border-[#002fa7] rounded-2xl p-6 transition-colors h-full min-h-[180px] flex flex-col items-center justify-center gap-3"
-                    >
-                      <div className="h-12 w-12 rounded-full bg-[#002fa7]/5 flex items-center justify-center group-hover:bg-[#002fa7]/10 transition-colors">
-                        <Plus className="h-6 w-6 text-[#002fa7]" />
-                      </div>
-                      <div className="text-center">
-                        <h4 className="font-medium text-gray-900 group-hover:text-[#002fa7] transition-colors">Create Business Account</h4>
-                        <p className="text-sm text-gray-500 mt-1">Link a new business to your identity token</p>
-                      </div>
-                    </button>
-                  </div>
-                </div>
-              </section>
-
-              {/* Other sections would go here */}
-              <section className={`space-y-6 ${activeSection !== 'profile' && 'hidden'}`}>
-                <h2 className="text-2xl font-bold text-gray-900">Profile Settings</h2>
-                {/* Profile settings content */}
-              </section>
-
-              <section className={`space-y-6 ${activeSection !== 'security' && 'hidden'}`}>
-                <h2 className="text-2xl font-bold text-gray-900">Security Settings</h2>
-                {/* Security settings content */}
-              </section>
-
-              <section className={`space-y-6 ${activeSection !== 'notifications' && 'hidden'}`}>
-                <h2 className="text-2xl font-bold text-gray-900">Notification Preferences</h2>
-                {/* Notifications settings content */}
-              </section>
-
-              <section className={`space-y-6 ${activeSection !== 'preferences' && 'hidden'}`}>
-                <h2 className="text-2xl font-bold text-gray-900">General Preferences</h2>
-                {/* Preferences settings content */}
-              </section>
-            </div>
+    <div className="relative w-full max-w-7xl mx-auto px-6 py-8">
+      <div className="flex gap-8">
+        {/* Sidebar Navigation */}
+        <div className="w-64 shrink-0">
+          <div className="sticky top-8 space-y-1">
+            <button
+              onClick={() => setActiveSection('profile')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
+                activeSection === 'profile' ? 'bg-[#002fa7] text-white' : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <User className="h-5 w-5" />
+              <span>Profile</span>
+            </button>
+            <button
+              onClick={() => setActiveSection('security')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
+                activeSection === 'security' ? 'bg-[#002fa7] text-white' : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <Lock className="h-5 w-5" />
+              <span>Security</span>
+            </button>
+            <button
+              onClick={() => setActiveSection('identity')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
+                activeSection === 'identity' ? 'bg-[#002fa7] text-white' : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <Shield className="h-5 w-5" />
+              <span>Identity Token</span>
+            </button>
+            <button
+              onClick={() => setActiveSection('notifications')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
+                activeSection === 'notifications' ? 'bg-[#002fa7] text-white' : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <Bell className="h-5 w-5" />
+              <span>Notifications</span>
+            </button>
           </div>
         </div>
+
+        {/* Main Content */}
+        <div className="flex-1 space-y-6">
+          {/* Identity Token Section */}
+          <section id="identity" className={`space-y-6 ${activeSection !== 'identity' && 'hidden'}`}>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Identity Token</h2>
+              <p className="text-gray-600 mt-1">Your unique digital identity for secure transactions</p>
+            </div>
+
+            {/* Token Display */}
+            <motion.div
+              variants={cardVariants}
+              initial="hidden"
+              animate="visible"
+              className="bg-white border border-gray-200 rounded-3xl shadow-lg p-6"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Your Identity Token</h3>
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <Clock className="h-4 w-4" />
+                  <span>Updated {formatDate(tokenData.lastUpdated)}</span>
+                </div>
+              </div>
+
+              <div className="bg-gray-50 rounded-xl p-4 mb-4">
+                <div className="flex items-center justify-between">
+                  <code className="text-sm font-mono text-gray-900 break-all">
+                    {tokenData.token}
+                  </code>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => copyToClipboard(tokenData.token)}
+                    className="ml-3 p-2 bg-white hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <Copy className="h-4 w-4 text-gray-600" />
+                  </motion.button>
+                </div>
+              </div>
+
+              <div className="text-sm text-gray-600 space-y-2">
+                <p>
+                  <strong>Security:</strong> This token is encrypted and unique to your identity. Never share it with unauthorized parties.
+                </p>
+                <p>
+                  <strong>Usage:</strong> Used for secure authentication in business transactions and account linking.
+                </p>
+              </div>
+            </motion.div>
+
+            {/* Business Accounts */}
+            <motion.div
+              variants={cardVariants}
+              initial="hidden"
+              animate="visible"
+              className="bg-white border border-gray-200 rounded-3xl shadow-lg p-6"
+            >
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Linked Business Accounts</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {tokenData.businessAccounts.map((business, index) => (
+                  <motion.div 
+                    key={index} 
+                    className="p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer"
+                    onClick={() => router.push('/business/dashboard')}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
+                          <Building className="w-6 h-6 text-[#002fa7]" />
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-gray-900">{business.businessName}</h4>
+                          <p className="text-sm text-gray-500">{business.accountType}</p>
+                        </div>
+                      </div>
+                      <ChevronRight className="h-5 w-5 text-gray-400" />
+                    </div>
+                    
+                    <div className="space-y-3 text-sm">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">Status:</span>
+                        <span className={`font-medium px-2 py-1 rounded-full text-xs ${
+                          business.status === 'approved' ? 'bg-green-100 text-green-600' : 'bg-yellow-100 text-yellow-600'
+                        }`}>
+                          {business.status.charAt(0).toUpperCase() + business.status.slice(1)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Linked:</span>
+                        <span className="text-gray-900">{formatDate(business.dateLinked)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Location:</span>
+                        <span className="text-gray-900">{business.location}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Contact:</span>
+                        <span className="text-gray-900">{business.email}</span>
+                      </div>
+                      <div className="pt-2 border-t border-gray-200">
+                        <p className="text-xs font-medium text-gray-600 mb-2">Authorized Employees:</p>
+                        <div className="space-y-1">
+                          {business.employees.map((employee, i) => (
+                            <div key={i} className="flex justify-between items-center">
+                              <span className="text-gray-900">{employee.name}</span>
+                              <span className="text-xs px-2 py-0.5 bg-[#002fa7]/10 text-[#002fa7] rounded-full">
+                                {employee.role}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+                
+                <div className="p-4">
+                  <button
+                    onClick={() => router.push('/business/create')}
+                    className="group border-2 border-dashed border-[#002fa7]/20 hover:border-[#002fa7] rounded-2xl p-6 transition-colors h-full min-h-[180px] flex flex-col items-center justify-center gap-3 w-full"
+                  >
+                    <div className="h-12 w-12 rounded-full bg-[#002fa7]/5 flex items-center justify-center group-hover:bg-[#002fa7]/10 transition-colors">
+                      <Plus className="h-6 w-6 text-[#002fa7]" />
+                    </div>
+                    <div className="text-center">
+                      <h4 className="font-medium text-gray-900 group-hover:text-[#002fa7] transition-colors">Create Business Account</h4>
+                      <p className="text-sm text-gray-500 mt-1">Link a new business to your identity token</p>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </section>
+
+          {/* Other sections would go here */}
+          <section className={`space-y-6 ${activeSection !== 'profile' && 'hidden'}`}>
+            <motion.div
+              variants={cardVariants}
+              initial="hidden"
+              animate="visible"
+              className="bg-white border border-gray-200 rounded-3xl shadow-lg p-6"
+            >
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">Profile Settings</h2>
+              <p className="text-gray-600">Manage your profile information and preferences.</p>
+            </motion.div>
+          </section>
+
+          <section className={`space-y-6 ${activeSection !== 'security' && 'hidden'}`}>
+            <motion.div
+              variants={cardVariants}
+              initial="hidden"
+              animate="visible"
+              className="bg-white border border-gray-200 rounded-3xl shadow-lg p-6"
+            >
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">Security Settings</h2>
+              <p className="text-gray-600">Configure your security preferences and authentication methods.</p>
+            </motion.div>
+          </section>
+
+          <section className={`space-y-6 ${activeSection !== 'notifications' && 'hidden'}`}>
+            <motion.div
+              variants={cardVariants}
+              initial="hidden"
+              animate="visible"
+              className="bg-white border border-gray-200 rounded-3xl shadow-lg p-6"
+            >
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">Notification Preferences</h2>
+              <p className="text-gray-600">Manage how you receive notifications and alerts.</p>
+            </motion.div>
+          </section>
+        </div>
       </div>
-    </Layout>
+    </div>
   );
 };
 

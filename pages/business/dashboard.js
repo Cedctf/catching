@@ -1,5 +1,24 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { 
+  TrendingUp, 
+  TrendingDown, 
+  DollarSign, 
+  FileText, 
+  Users, 
+  CreditCard,
+  Calendar,
+  MoreVertical,
+  ArrowUpRight,
+  ArrowDownLeft,
+  CheckCircle,
+  Clock,
+  AlertCircle,
+  Settings,
+  Bell,
+  Plus
+} from 'lucide-react';
 import AnalyticsCard from '../../components/AnalyticsCard';
 import SimpleBarChart from '../../components/SimpleBarChart';
 
@@ -37,297 +56,332 @@ export default function BusinessDashboard() {
   };
 
   const formatCurrency = (amount) => {
-    return `RM ${amount.toFixed(2)}`;
+    const numAmount = Number(amount) || 0;
+    return new Intl.NumberFormat('en-MY', {
+      style: 'currency',
+      currency: 'MYR',
+    }).format(numAmount);
   };
 
   const formatPercentage = (value) => {
-    return `${value.toFixed(1)}%`;
+    const numValue = Number(value) || 0;
+    return `${numValue.toFixed(1)}%`;
   };
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-MY', {
       year: 'numeric',
       month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+      day: 'numeric'
     });
   };
 
-  if (loading) {
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'completed': return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case 'pending': return <Clock className="h-4 w-4 text-yellow-500" />;
+      case 'failed': return <AlertCircle className="h-4 w-4 text-red-500" />;
+      default: return null;
+    }
+  };
+
+  const cardVariants = {
+    hidden: { opacity: 0, y: 50, rotateX: 15 },
+    visible: {
+      opacity: 1, y: 0, rotateX: 0,
+      transition: { duration: 0.8, ease: [0.25, 0.4, 0.25, 1] }
+    }
+  };
+
+  if (loading || !analytics) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading dashboard...</p>
+      <div className="relative w-full max-w-7xl mx-auto px-6 py-8">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            className="w-8 h-8 border-2 border-[#002fa7] border-t-transparent rounded-full"
+          />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="relative w-full max-w-7xl mx-auto px-6 py-8 space-y-6">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Business Dashboard</h1>
-              <p className="text-gray-600">Doe's Bakery</p>
+      <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Business Dashboard</h1>
+          <p className="text-gray-600">Monitor your business performance and transactions</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Link href="/invoice">
+            <motion.button 
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="flex items-center gap-2 bg-[#002fa7] hover:bg-[#002fa7]/90 text-white font-medium py-2 px-4 rounded-xl transition-colors duration-200 text-sm"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Create Invoice</span>
+            </motion.button>
+          </Link>
+          <button className="flex items-center gap-2 bg-white hover:bg-gray-50 text-gray-700 font-medium py-2 px-4 rounded-xl transition-colors duration-200 border border-gray-200 text-sm">
+            <Bell className="h-4 w-4" />
+            <span>Notifications</span>
+          </button>
+          <button className="flex items-center gap-2 bg-white hover:bg-gray-50 text-gray-700 font-medium py-2 px-4 rounded-xl transition-colors duration-200 border border-gray-200 text-sm">
+            <Settings className="h-4 w-4" />
+            <span>Settings</span>
+          </button>
+        </div>
+      </header>
+
+      {/* Analytics Overview */}
+      {analytics && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <motion.div
+            variants={cardVariants}
+            initial="hidden"
+            animate="visible"
+            className="p-6 bg-white border border-gray-200 rounded-3xl shadow-lg"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 bg-[#002fa7]/10 rounded-xl">
+                <DollarSign className="h-6 w-6 text-[#002fa7]" />
+              </div>
+              <div className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium ${
+                analytics.revenue?.growth >= 0 ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+              }`}>
+                {analytics.revenue?.growth >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownLeft className="h-3 w-3" />}
+                {formatPercentage(Math.abs(analytics.revenue?.growth || 0))}
+              </div>
             </div>
-            <Link href="/" className="text-blue-600 hover:text-blue-800">
-              ← Back to Home
+            <div className="space-y-1">
+              <h3 className="text-sm font-medium text-gray-600">Total Revenue</h3>
+              <p className="text-2xl font-bold text-gray-900">{formatCurrency(analytics.revenue?.total || 0)}</p>
+            </div>
+          </motion.div>
+
+          <motion.div
+            variants={cardVariants}
+            initial="hidden"
+            animate="visible"
+            className="p-6 bg-white border border-gray-200 rounded-3xl shadow-lg"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 bg-green-100 rounded-xl">
+                <FileText className="h-6 w-6 text-green-600" />
+              </div>
+              <div className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium ${
+                analytics.invoices?.growth >= 0 ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+              }`}>
+                {analytics.invoices?.growth >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownLeft className="h-3 w-3" />}
+                {formatPercentage(Math.abs(analytics.invoices?.growth || 0))}
+              </div>
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-sm font-medium text-gray-600">Total Invoices</h3>
+              <p className="text-2xl font-bold text-gray-900">{analytics.invoices?.total || 0}</p>
+            </div>
+          </motion.div>
+
+          <motion.div
+            variants={cardVariants}
+            initial="hidden"
+            animate="visible"
+            className="p-6 bg-white border border-gray-200 rounded-3xl shadow-lg"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 bg-purple-100 rounded-xl">
+                <CreditCard className="h-6 w-6 text-purple-600" />
+              </div>
+              <div className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium ${
+                analytics.transactions?.growth >= 0 ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+              }`}>
+                {analytics.transactions?.growth >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownLeft className="h-3 w-3" />}
+                {formatPercentage(Math.abs(analytics.transactions?.growth || 0))}
+              </div>
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-sm font-medium text-gray-600">Transactions</h3>
+              <p className="text-2xl font-bold text-gray-900">{analytics.transactions?.total || 0}</p>
+            </div>
+          </motion.div>
+
+          <motion.div
+            variants={cardVariants}
+            initial="hidden"
+            animate="visible"
+            className="p-6 bg-white border border-gray-200 rounded-3xl shadow-lg"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 bg-orange-100 rounded-xl">
+                <Users className="h-6 w-6 text-orange-600" />
+              </div>
+              <div className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-600">
+                <ArrowUpRight className="h-3 w-3" />
+                {formatPercentage(analytics.successRate || 0)}
+              </div>
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-sm font-medium text-gray-600">Success Rate</h3>
+              <p className="text-2xl font-bold text-gray-900">{formatPercentage(analytics.successRate || 0)}</p>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {analytics && (
+          <motion.div
+            variants={cardVariants}
+            initial="hidden"
+            animate="visible"
+            className="lg:col-span-3 bg-white border border-gray-200 rounded-3xl shadow-lg p-6"
+          >
+            <SimpleBarChart 
+              data={analytics.dailyRevenue.map(day => ({
+                label: day.fullDate,
+                value: day.revenue
+              }))} 
+              title="Daily Revenue (Last 7 Days)"
+              formatValue={formatCurrency}
+            />
+          </motion.div>
+        )}
+
+        {analytics && (
+          <motion.div
+            variants={cardVariants}
+            initial="hidden"
+            animate="visible"
+            className="lg:col-span-1 bg-white border border-gray-200 rounded-3xl shadow-lg p-6"
+          >
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900">Payment Methods</h3>
+              <div className="space-y-3">
+                {Object.entries(analytics.paymentMethods || {}).map(([method, data]) => (
+                  <div key={method} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                    <div className="flex items-center gap-3">
+                      <div className="w-3 h-3 bg-[#002fa7] rounded-full"></div>
+                      <span className="font-medium text-gray-900 capitalize">{method}</span>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm font-medium text-gray-900">{data.count || 0}</div>
+                      <div className="text-xs text-gray-500">{formatPercentage(data.percentage || 0)}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </div>
+
+      {/* Recent Transactions */}
+      <motion.div
+        variants={cardVariants}
+        initial="hidden"
+        animate="visible"
+        className="bg-white border border-gray-200 rounded-3xl shadow-lg"
+      >
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-900">Recent Transactions</h3>
+            <Link href="/business/transactions" className="text-[#002fa7] hover:text-[#002fa7]/80 font-medium text-sm">
+              View All
             </Link>
           </div>
         </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Analytics Overview */}
-        {analytics && (
-          <>
-            {/* Primary Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-              <AnalyticsCard
-                title="Total Revenue"
-                value={formatCurrency(analytics.revenue)}
-                subtitle={`Net Balance: ${formatCurrency(analytics.balance)}`}
-                icon="💰"
-                color="green"
-              />
-              
-              <AnalyticsCard
-                title="Transactions"
-                value={analytics.totalTransactions}
-                subtitle={`${analytics.completedTransactions} completed`}
-                icon="📊"
-                color="blue"
-              />
-              
-              <AnalyticsCard
-                title="Invoices"
-                value={analytics.totalInvoices}
-                subtitle={`${analytics.paidInvoices} paid`}
-                icon="📄"
-                color="purple"
-              />
-              
-              <AnalyticsCard
-                title="Success Rate"
-                value={formatPercentage(analytics.successRate)}
-                subtitle={`Avg: ${formatCurrency(analytics.avgTransactionValue)}`}
-                icon="📈"
-                color="yellow"
-              />
-            </div>
-
-            {/* Secondary Analytics */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              {/* Payment Methods Breakdown */}
-              <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-lg font-semibold mb-4">Payment Methods</h3>
-                <div className="space-y-3">
-                  {Object.entries(analytics.paymentMethods).map(([method, amount]) => (
-                    <div key={method} className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-gray-600">{method}</span>
-                      <span className="text-sm font-bold text-gray-900">{formatCurrency(amount)}</span>
+        <div className="p-6">
+          <div className="space-y-4">
+            {transactions.slice(0, 5).map((transaction) => (
+              <div key={transaction.transaction_id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                <div className="flex items-center gap-4">
+                  <div className="p-2 bg-white rounded-xl border border-gray-200">
+                    {getStatusIcon(transaction.transaction_status)}
+                  </div>
+                  <div>
+                    <div className="font-medium text-gray-900">
+                      {transaction.payer_identity_token ? `Payment from ${transaction.payer_identity_token.substring(0, 8)}...` : 'Anonymous Payment'}
                     </div>
-                  ))}
+                    <div className="text-sm text-gray-500">
+                      {formatDate(transaction.transaction_date)} • {transaction.payment_method}
+                    </div>
+                  </div>
                 </div>
-              </div>
-
-              {/* Monthly Summary */}
-              <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-lg font-semibold mb-4">This Month</h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-gray-600">Revenue</span>
-                    <span className="text-sm font-bold text-green-600">{formatCurrency(analytics.monthlyRevenue)}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-gray-600">Pending</span>
-                    <span className="text-sm font-bold text-yellow-600">{formatCurrency(analytics.pendingAmount)}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-gray-600">Failed</span>
-                    <span className="text-sm font-bold text-red-600">{formatCurrency(analytics.failedAmount)}</span>
+                <div className="text-right">
+                  <div className="font-semibold text-gray-900">{formatCurrency(transaction.amount || 0)}</div>
+                  <div className={`text-xs capitalize ${
+                    transaction.transaction_status === 'completed' ? 'text-green-600' :
+                    transaction.transaction_status === 'pending' ? 'text-yellow-600' :
+                    'text-red-600'
+                  }`}>
+                    {transaction.transaction_status}
                   </div>
                 </div>
               </div>
-
-              {/* Invoice Status */}
-              <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-lg font-semibold mb-4">Invoice Status</h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-gray-600">Paid</span>
-                    <span className="text-sm font-bold text-green-600">{analytics.paidInvoices}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-gray-600">Pending</span>
-                    <span className="text-sm font-bold text-yellow-600">{analytics.pendingInvoices}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-gray-600">Overdue</span>
-                    <span className="text-sm font-bold text-red-600">{analytics.overdueInvoices}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Daily Revenue Chart */}
-            <SimpleBarChart
-              title="Daily Revenue (Last 7 Days)"
-              data={analytics.dailyRevenue.map(day => ({
-                label: new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' }),
-                value: day.revenue
-              }))}
-              formatValue={formatCurrency}
-            />
-          </>
-        )}
-
-        {/* Recent Transactions */}
-        <div className="bg-white rounded-lg shadow mb-8">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Recent Transactions</h2>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Transaction ID
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Amount
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Method
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {transactions.length === 0 ? (
-                  <tr>
-                    <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
-                      No transactions yet
-                    </td>
-                  </tr>
-                ) : (
-                  transactions.map((transaction) => (
-                    <tr key={transaction.transaction_id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">
-                        {transaction.transaction_id}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                        {formatCurrency(transaction.amount)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          transaction.payment_method === 'FACE' 
-                            ? 'bg-blue-100 text-blue-800' 
-                            : 'bg-green-100 text-green-800'
-                        }`}>
-                          {transaction.payment_method}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {formatDate(transaction.transaction_date)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          transaction.transaction_status === 'completed'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          {transaction.transaction_status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+            ))}
           </div>
         </div>
+      </motion.div>
 
-        {/* Recent Invoices */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Recent Invoices</h2>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Invoice Number
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Amount
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Created
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {invoices.length === 0 ? (
-                  <tr>
-                    <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
-                      No invoices yet
-                    </td>
-                  </tr>
-                ) : (
-                  invoices.map((invoice) => (
-                    <tr key={invoice.invoice_number} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">
-                        {invoice.invoice_number}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                        {formatCurrency(invoice.amount)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          invoice.status === 'paid'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          {invoice.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {formatDate(invoice.created_at)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        <Link 
-                          href={`/invoice/${invoice.invoice_number}`}
-                          className="text-blue-600 hover:text-blue-800"
-                        >
-                          View
-                        </Link>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+      {/* Recent Invoices */}
+      <motion.div
+        variants={cardVariants}
+        initial="hidden"
+        animate="visible"
+        className="bg-white border border-gray-200 rounded-3xl shadow-lg"
+      >
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-900">Recent Invoices</h3>
+            <Link href="/invoice" className="text-[#002fa7] hover:text-[#002fa7]/80 font-medium text-sm">
+              View All
+            </Link>
           </div>
         </div>
-      </div>
+        <div className="p-6">
+          <div className="space-y-4">
+            {invoices.slice(0, 5).map((invoice) => {
+              const dueDate = new Date(invoice.due_date);
+              const isOverdue = dueDate < new Date() && invoice.status === 'pending';
+              
+              return (
+                <div key={invoice.invoice_number} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                  <div className="flex items-center gap-4">
+                    <div className="p-2 bg-white rounded-xl border border-gray-200">
+                      <FileText className={`h-4 w-4 ${
+                        invoice.status === 'paid' ? 'text-green-500' :
+                        isOverdue ? 'text-red-500' : 'text-yellow-500'
+                      }`} />
+                    </div>
+                    <div>
+                      <div className="font-medium text-gray-900">
+                        Invoice #{invoice.invoice_number}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        Due: {formatDate(invoice.due_date)}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-semibold text-gray-900">{formatCurrency(invoice.amount || 0)}</div>
+                    <div className={`text-xs capitalize ${
+                      invoice.status === 'paid' ? 'text-green-600' :
+                      isOverdue ? 'text-red-600' : 'text-yellow-600'
+                    }`}>
+                      {isOverdue ? 'Overdue' : invoice.status}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </motion.div>
     </div>
   );
 }
