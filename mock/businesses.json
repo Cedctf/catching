@@ -1,0 +1,30 @@
+{
+  "businesses": [
+    {
+      "user_identity_token": "encrypted_user_token_here",
+      "business_name": "Doe's Bakery",
+      "business_address": "456 Bakery St",
+      "business_email": "info@doesbakery.com",
+      "business_phone": "+60123456780",
+      "identity_token": "encrypted_business_token_here",
+      "kyc_status": "approved",
+      "registration_date": "2025-07-05",
+      "authorized_employees": [
+        {
+          "first_name": "Alice",
+          "last_name": "Smith",
+          "email": "alice.smith@doesbakery.com",
+          "role": "Manager",
+          "permissions": ["payment_access", "invoice_management", "report_access"]
+        },
+        {
+          "first_name": "Bob",
+          "last_name": "Johnson",
+          "email": "bob.johnson@doesbakery.com",
+          "role": "Cashier",
+          "permissions": ["payment_access"]
+        }
+      ]
+    }
+  ]
+}
