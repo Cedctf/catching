@@ -2,8 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { Inter, Poppins } from "next/font/google";
-import Hero from "../components/Hero";
 import Navbar from "../components/Navbar";
+import ScrollExpandMedia from "../components/scroll-expansion-hero";
 import { FlippingCard } from "../components/flipping-card";
 import { 
   FaceRecognitionIcon, 
@@ -55,26 +55,32 @@ export default function Home() {
   ];
 
   return (
-    <div className={`${inter.variable} ${poppins.variable} font-sans`}>
+    <div className={`${inter.variable} ${poppins.variable} font-sans bg-white`}>
       {/* Navbar */}
       <Navbar isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} user={user} />
 
-      {/* Scrollable Sections Container */}
-      <div className="h-screen overflow-y-auto snap-y snap-mandatory">
+      {/* Main Content Container */}
+      <div className="bg-white">
         {/* Hero Section */}
-        <section className="h-screen snap-start">
-          <div className="h-full pt-[72px]">
-            <Hero />
-          </div>
+        <section className="h-screen bg-white">
+          <ScrollExpandMedia
+            mediaType="image"
+            mediaSrc="/face.png"
+            bgImageSrc=""
+            title="The Future of | Digital Payments"
+            scrollToExpand="Experience seamless, secure payments with face recognition and QR code technology. Fast, reliable, and built for the modern world."
+            textBlend={false}
+          >
+          </ScrollExpandMedia>
         </section>
 
         {/* Features Section */}
-        <section className="min-h-screen snap-start bg-white flex items-center">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 pt-24">
+        <section className="bg-white py-24">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h2 className="text-4xl font-bold text-center mb-12">
               Experience Next-Gen Payment Features
             </h2>
-            <div className="grid md:grid-cols-3 gap-6 mb-16">
+            <div className="grid md:grid-cols-3 gap-6 mb-16 place-items-center justify-center max-w-6xl mx-auto">
               {features.map((feature, index) => (
                 <FlippingCard
                   key={index}
@@ -117,7 +123,7 @@ export default function Home() {
         </section>
 
         {/* Footer Section */}
-        <footer className="snap-start py-8 bg-white border-t">
+        <footer className="py-8 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center text-gray-600">
               <p>&copy; 2025 PayID - Digital Payment Platform</p>
@@ -128,7 +134,10 @@ export default function Home() {
 
       <style jsx global>{`
         html {
-          scroll-behavior: smooth;
+          background: white;
+        }
+        body {
+          background: white;
         }
       `}</style>
     </div>
