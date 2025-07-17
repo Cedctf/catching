@@ -5,6 +5,8 @@ export default function handler(req, res) {
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
+  console.log('Payment API called with:', req.body);
+
   try {
     const { amount, paymentMethod, payerToken, receiverToken } = req.body;
 
@@ -53,8 +55,18 @@ export default function handler(req, res) {
     };
 
     // Save transaction and invoice
-    addTransaction(transaction);
-    addInvoice(invoice);
+    const transactionAdded = addTransaction(transaction);
+    const invoiceAdded = addInvoice(invoice);
+
+    if (!transactionAdded || !invoiceAdded) {
+      console.log('Duplicate payment detected, returning existing transaction');
+      return res.status(409).json({
+        success: false,
+        message: 'Duplicate payment detected'
+      });
+    }
+
+    console.log('Payment processed successfully:', { transactionId, invoiceNumber });
 
     // Return success response
     res.status(200).json({

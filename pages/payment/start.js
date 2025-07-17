@@ -12,7 +12,9 @@ export default function PaymentStart() {
   const [cameraStream, setCameraStream] = useState(null);
   const [cameraError, setCameraError] = useState(null);
   const [scanProgress, setScanProgress] = useState(0);
+  const [paymentProcessed, setPaymentProcessed] = useState(false);
   const videoRef = useRef(null);
+  const processingRef = useRef(false);
 
   const handlePaymentMethodSelect = async (method) => {
     setPaymentMethod(method);
@@ -86,7 +88,18 @@ export default function PaymentStart() {
   };
 
   const processPayment = async () => {
+    // Prevent duplicate processing
+    if (processingRef.current || paymentProcessed) {
+      console.log('Payment already being processed, skipping...');
+      return;
+    }
+
+    processingRef.current = true;
+    setPaymentProcessed(true);
+
     try {
+      console.log('Processing payment...', { amount, paymentMethod });
+      
       const response = await fetch('/api/payment/process', {
         method: 'POST',
         headers: {
@@ -101,24 +114,28 @@ export default function PaymentStart() {
       });
 
       const result = await response.json();
+      console.log('Payment result:', result);
       
       if (result.success) {
         router.push(`/payment/success?txnId=${result.transactionId}&amount=${amount}&method=${paymentMethod}`);
       } else {
         alert('Payment failed. Please try again.');
-        setIsProcessing(false);
-        setShowFaceScan(false);
-        setShowQRScan(false);
-        stopCamera();
+        resetPaymentState();
       }
     } catch (error) {
       console.error('Payment error:', error);
       alert('Payment failed. Please try again.');
-      setIsProcessing(false);
-      setShowFaceScan(false);
-      setShowQRScan(false);
-      stopCamera();
+      resetPaymentState();
     }
+  };
+
+  const resetPaymentState = () => {
+    setIsProcessing(false);
+    setShowFaceScan(false);
+    setShowQRScan(false);
+    setPaymentProcessed(false);
+    processingRef.current = false;
+    stopCamera();
   };
 
   return (
