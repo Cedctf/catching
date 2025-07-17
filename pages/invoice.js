@@ -5,7 +5,7 @@ import jsPDF from 'jspdf';
 
 export default function InvoicePage() {
   const invoiceRef = useRef();
-  const [email, setEmail] = useState('cedricctf11a@gmail.com'); // Pre-filled default email
+  const [email, setEmail] = useState('loyqunjie@gmail.com'); // Pre-filled default email
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
 

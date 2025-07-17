@@ -1,21 +1,193 @@
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
+import EInvoice from '../../components/EInvoice';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 export default function PaymentSuccess() {
   const router = useRouter();
   const { txnId, amount, method } = router.query;
   const [transactionDetails, setTransactionDetails] = useState(null);
+  const [invoiceData, setInvoiceData] = useState(null);
+  const [emailSent, setEmailSent] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const invoiceRef = useRef();
 
   useEffect(() => {
     if (txnId) {
       // Fetch transaction details
       fetch(`/api/payment/details?txnId=${txnId}`)
         .then(res => res.json())
-        .then(data => setTransactionDetails(data))
+        .then(data => {
+          setTransactionDetails(data);
+          // Fetch invoice data using the invoice number
+          if (data.invoiceNumber) {
+            fetchInvoiceData(data.invoiceNumber);
+          }
+        })
         .catch(err => console.error('Error fetching transaction details:', err));
     }
   }, [txnId]);
+
+  const fetchInvoiceData = async (invoiceNumber) => {
+    try {
+      const response = await fetch(`/api/invoice/${invoiceNumber}`);
+      if (response.ok) {
+        const data = await response.json();
+        setInvoiceData(data);
+        // Auto-send email after invoice data is loaded
+        autoSendEmail(data, invoiceNumber);
+      }
+    } catch (error) {
+      console.error('Error fetching invoice data:', error);
+    }
+  };
+
+  const autoSendEmail = async (invoice, invoiceNumber) => {
+    if (emailSent) return; // Prevent duplicate emails
+    
+    try {
+      // Generate PDF for email
+      const pdfData = await generatePDF();
+      
+      // Auto-send to a default email (you can modify this logic)
+      const defaultEmail = 'loyqunjie@gmail.com'; // Replace with actual customer email
+      
+      const response = await fetch('/api/send-invoice-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: defaultEmail,
+          pdfData,
+          invoiceNumber: invoiceNumber,
+        }),
+      });
+
+      if (response.ok) {
+        setEmailSent(true);
+        console.log('Invoice email sent automatically');
+      }
+    } catch (error) {
+      console.error('Error auto-sending email:', error);
+    }
+  };
+
+  const generatePDF = async () => {
+    const element = invoiceRef.current;
+    
+    // Create a clone of the element to avoid modifying the original
+    const clonedElement = element.cloneNode(true);
+    
+    // Apply inline styles to preserve exact styling
+    const applyInlineStyles = (el) => {
+      const computedStyle = window.getComputedStyle(el);
+      
+      // Copy all computed styles to inline styles
+      const stylesToCopy = [
+        'backgroundColor', 'color', 'fontSize', 'fontFamily', 'fontWeight',
+        'padding', 'margin', 'border', 'borderColor', 'borderWidth', 'borderStyle',
+        'textAlign', 'lineHeight', 'display', 'width', 'height', 'minWidth',
+        'maxWidth', 'boxSizing', 'textDecoration', 'textTransform'
+      ];
+      
+      stylesToCopy.forEach(prop => {
+        const value = computedStyle.getPropertyValue(prop.replace(/([A-Z])/g, '-$1').toLowerCase());
+        if (value && value !== 'initial' && value !== 'inherit') {
+          // Convert lab() colors to rgb() equivalents
+          if (value.includes('lab(')) {
+            if (prop === 'backgroundColor') {
+              el.style[prop] = '#ffffff';
+            } else if (prop === 'color') {
+              el.style[prop] = '#000000';
+            }
+          } else {
+            el.style[prop] = value;
+          }
+        }
+      });
+      
+      // Recursively apply to children
+      Array.from(el.children).forEach(applyInlineStyles);
+    };
+    
+    // Temporarily add the cloned element to the DOM
+    document.body.appendChild(clonedElement);
+    clonedElement.style.position = 'absolute';
+    clonedElement.style.left = '-9999px';
+    clonedElement.style.top = '0';
+    
+    try {
+      applyInlineStyles(clonedElement);
+      
+      const canvas = await html2canvas(clonedElement, {
+        scale: 1.5,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+      });
+
+      const imgData = canvas.toDataURL('image/jpeg', 0.8);
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      
+      const imgWidth = 210;
+      const pageHeight = 295;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      return pdf.output('datauristring').split(',')[1]; // Return base64 string
+    } finally {
+      // Clean up: remove the cloned element
+      document.body.removeChild(clonedElement);
+    }
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!invoiceData) return;
+    
+    setIsDownloading(true);
+    try {
+      const pdfData = await generatePDF();
+      
+      // Convert base64 back to blob and download
+      const byteCharacters = atob(pdfData);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: 'application/pdf' });
+      
+      // Create download link
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `invoice-${transactionDetails?.invoiceNumber || txnId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Error generating PDF. Please try again.');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   const formatMethod = (method) => {
     return method === 'face' ? 'Face Recognition' : 'QR Code';
@@ -79,9 +251,28 @@ export default function PaymentSuccess() {
             <div className="text-sm text-gray-600 mb-2">Invoice Number</div>
             <div className="font-mono font-medium">{transactionDetails?.invoiceNumber || 'Loading...'}</div>
           </div>
-          <button className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors">
-            📄 Download PDF Invoice
+          
+          {/* Email Status */}
+          {emailSent && (
+            <div className="bg-green-50 border border-green-200 text-green-700 px-3 py-2 rounded-lg mb-4 text-sm">
+              Invoice emailed successfully!
+            </div>
+          )}
+          
+          <button 
+            onClick={handleDownloadPDF}
+            disabled={!invoiceData || isDownloading}
+            className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:bg-blue-300 transition-colors"
+          >
+            {isDownloading ? 'Generating PDF...' : 'Download PDF Invoice'}
           </button>
+        </div>
+
+        {/* Hidden EInvoice for PDF Generation */}
+        <div style={{ position: 'absolute', left: '-9999px', top: '0' }}>
+          <div ref={invoiceRef}>
+            {invoiceData && <EInvoice {...invoiceData} />}
+          </div>
         </div>
 
         {/* Action Buttons */}
@@ -101,7 +292,7 @@ export default function PaymentSuccess() {
 
         {/* Receipt Note */}
         <div className="text-center mt-6 text-sm text-gray-500">
-          <p>A receipt has been sent to your registered email</p>
+          <p>{emailSent ? 'E-Invoice has been sent to your registered email' : 'Sending e-invoice to your email...'}</p>
         </div>
       </div>
     </div>
