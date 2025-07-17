@@ -107,6 +107,42 @@
       "due_date": "2025-07-24",
       "status": "paid",
       "created_at": "2025-07-17T18:05:20.300Z"
+    },
+    {
+      "user_identity_token": "encrypted_token_here",
+      "business_identity_token": "encrypted_business_token_here",
+      "invoice_number": "INV20250013",
+      "amount": 30,
+      "due_date": "2025-07-24",
+      "status": "paid",
+      "created_at": "2025-07-17T18:28:45.584Z"
+    },
+    {
+      "user_identity_token": "encrypted_token_here",
+      "business_identity_token": "encrypted_business_token_here",
+      "invoice_number": "INV20250014",
+      "amount": 30,
+      "due_date": "2025-07-24",
+      "status": "paid",
+      "created_at": "2025-07-17T18:28:45.595Z"
+    },
+    {
+      "user_identity_token": "encrypted_token_here",
+      "business_identity_token": "encrypted_business_token_here",
+      "invoice_number": "INV20250015",
+      "amount": 54,
+      "due_date": "2025-07-24",
+      "status": "paid",
+      "created_at": "2025-07-17T18:36:55.445Z"
+    },
+    {
+      "user_identity_token": "encrypted_token_here",
+      "business_identity_token": "encrypted_business_token_here",
+      "invoice_number": "INV20250016",
+      "amount": 54,
+      "due_date": "2025-07-24",
+      "status": "paid",
+      "created_at": "2025-07-17T18:36:55.457Z"
     }
   ]
 }
