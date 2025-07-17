@@ -1,6 +1,7 @@
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import EInvoice from '../../components/EInvoice';
 
 export default function InvoiceDetail() {
   const router = useRouter();
@@ -31,21 +32,62 @@ export default function InvoiceDetail() {
     }
   };
 
-  const handleDownloadPDF = () => {
-    // Simulate PDF download
-    alert('PDF download would start here in a real implementation');
+  // Static fallback data for unavailable fields (same as main invoice page)
+  const staticFallbacks = {
+    companyInfo: {
+      name: 'Food Eatery Sdn Bhd',
+      address: '1st Floor, Palm Green, Kesari Street, 543210, Kuala Lumpur',
+      phone: '60312346789',
+      email: 'gretasolutions.com'
+    },
+    supplier: {
+      tin: 'E100000000030',
+      name: 'ABC Advisory Ltd',
+      regNo: 'NA',
+      sstId: 'NA',
+      address: '1, Street Avenue, NOP 123 England',
+      contact: '441234567890',
+      email: 'ABC advisory@gamil.com',
+      msic: '00000',
+      activity: 'NA'
+    },
+    buyer: {
+      tin: 'C987654321120',
+      regNo: '298021010000023',
+      sstId: 'L10-5621-78000000'
+    },
+    invoiceMeta: {
+      type: '01 - Invoice',
+      version: '1.0',
+      code: 'INV000001',
+      uid: '123456789-2024-4017344',
+      refNo: 'Not Applicable',
+      dateTime: '11/06/2024 11:53:13',
+      validationDate: '12/06/2024 12:58:13'
+    },
+    digitalSignature: '9e83e05bbf9b8dbac0deeec3bce6cba983f6dc50531c7a919f28d5fb369etc3',
+    qrCodeUrl: '',
+    notes: ''
   };
 
-  const formatCurrency = (amount) => {
-    return `RM ${amount.toFixed(2)}`;
-  };
+  // Merge API data with static fallbacks
+  const getMergedData = () => {
+    if (!invoice) {
+      return staticFallbacks;
+    }
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-MY', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+    return {
+      companyInfo: { ...staticFallbacks.companyInfo, ...invoice.companyInfo },
+      supplier: { ...staticFallbacks.supplier, ...invoice.supplier },
+      buyer: { ...staticFallbacks.buyer, ...invoice.buyer },
+      invoiceMeta: { ...staticFallbacks.invoiceMeta, ...invoice.invoiceMeta },
+      items: invoice.items || [],
+      summary: invoice.summary || {},
+      digitalSignature: invoice.digitalSignature || staticFallbacks.digitalSignature,
+      qrCodeUrl: invoice.qrCodeUrl || staticFallbacks.qrCodeUrl,
+      notes: invoice.notes || staticFallbacks.notes,
+      showIllustrationBadge: false
+    };
   };
 
   if (loading) {
@@ -59,17 +101,13 @@ export default function InvoiceDetail() {
     );
   }
 
-  if (error || !invoice) {
+  if (error) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="text-6xl mb-4">📄</div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Invoice Not Found</h1>
-          <p className="text-gray-600 mb-6">{error || 'The requested invoice could not be found.'}</p>
-          <Link href="/business/dashboard">
-            <button className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700">
-              Back to Dashboard
-            </button>
+          <div className="text-red-600 text-xl mb-4">{error}</div>
+          <Link href="/business/dashboard" className="text-blue-600 hover:text-blue-800">
+            Back to Dashboard
           </Link>
         </div>
       </div>
@@ -78,138 +116,34 @@ export default function InvoiceDetail() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto px-4">
         {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Invoice Details</h1>
-          <Link href="/business/dashboard" className="text-blue-600 hover:text-blue-800">
-            ← Back to Dashboard
+        <div className="mb-6">
+          <Link href="/business/dashboard" className="text-blue-600 hover:text-blue-800 mb-4 inline-block">
+            Back to Dashboard
           </Link>
+          <h1 className="text-3xl font-bold text-gray-900">Invoice Details</h1>
         </div>
 
-        {/* Invoice */}
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-          {/* Invoice Header */}
-          <div className="bg-blue-600 text-white p-6">
-            <div className="flex justify-between items-start">
-              <div>
-                <h2 className="text-2xl font-bold mb-2">INVOICE</h2>
-                <p className="text-blue-100">Catching Payment System</p>
-              </div>
-              <div className="text-right">
-                <div className="text-3xl font-bold">{invoice.invoice_number}</div>
-                <div className="text-blue-100">Invoice Number</div>
-              </div>
-            </div>
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          {/* Status Badge */}
+          <div className="mb-4 flex justify-between items-center">
+            <h2 className="text-xl font-semibold text-gray-900">
+              Invoice #{invoice.invoice_number || invoice.id}
+            </h2>
+            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+              invoice.status === 'paid' 
+                ? 'bg-green-100 text-green-800'
+                : invoice.status === 'overdue'
+                ? 'bg-red-100 text-red-800'
+                : 'bg-yellow-100 text-yellow-800'
+            }`}>
+              {invoice.status ? invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1) : 'Pending'}
+            </span>
           </div>
-
-          {/* Invoice Body */}
-          <div className="p-6">
-            {/* Business and Customer Info */}
-            <div className="grid md:grid-cols-2 gap-8 mb-8">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">From:</h3>
-                <div className="text-gray-600">
-                  <div className="font-medium text-gray-900">Doe's Bakery</div>
-                  <div>456 Bakery St</div>
-                  <div>info@doesbakery.com</div>
-                  <div>+60123456780</div>
-                </div>
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">To:</h3>
-                <div className="text-gray-600">
-                  <div className="font-medium text-gray-900">John Doe</div>
-                  <div>123 Main St</div>
-                  <div>john.doe@email.com</div>
-                  <div>+60123456789</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Invoice Details */}
-            <div className="grid md:grid-cols-3 gap-6 mb-8">
-              <div>
-                <div className="text-sm text-gray-500 mb-1">Invoice Date</div>
-                <div className="font-medium">{formatDate(invoice.created_at)}</div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-500 mb-1">Due Date</div>
-                <div className="font-medium">{formatDate(invoice.due_date)}</div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-500 mb-1">Status</div>
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  invoice.status === 'paid'
-                    ? 'bg-green-100 text-green-800'
-                    : 'bg-yellow-100 text-yellow-800'
-                }`}>
-                  {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
-                </span>
-              </div>
-            </div>
-
-            {/* Invoice Items */}
-            <div className="border border-gray-200 rounded-lg overflow-hidden mb-8">
-              <table className="min-w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Description
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Amount
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white">
-                  <tr>
-                    <td className="px-6 py-4 text-sm text-gray-900">
-                      Payment Transaction - {invoice.invoice_number}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900 text-right font-medium">
-                      {formatCurrency(invoice.amount)}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            {/* Total */}
-            <div className="flex justify-end mb-8">
-              <div className="w-64">
-                <div className="flex justify-between items-center py-2 border-t border-gray-200">
-                  <span className="text-lg font-semibold text-gray-900">Total Amount</span>
-                  <span className="text-2xl font-bold text-gray-900">{formatCurrency(invoice.amount)}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Payment Info */}
-            <div className="bg-gray-50 rounded-lg p-4 mb-6">
-              <h4 className="font-medium text-gray-900 mb-2">Payment Information</h4>
-              <p className="text-sm text-gray-600">
-                This invoice has been automatically generated for a Catching payment transaction. 
-                Payment was processed securely through our digital payment platform.
-              </p>
-            </div>
-
-            {/* Actions */}
-            <div className="flex gap-4">
-              <button
-                onClick={handleDownloadPDF}
-                className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Download PDF
-              </button>
-              <button
-                onClick={() => window.print()}
-                className="border border-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Print Invoice
-              </button>
-            </div>
-          </div>
+          
+          {/* EInvoice Component */}
+          <EInvoice {...getMergedData()} />
         </div>
       </div>
     </div>
