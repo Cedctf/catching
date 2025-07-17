@@ -54,7 +54,7 @@ export default function PaymentSuccess() {
       const pdfData = await generatePDF();
       
       // Auto-send to a default email (you can modify this logic)
-      const defaultEmail = 'cedricctf11a@gmail.com'; // Replace with actual customer email
+      const defaultEmail = 'loyqunjie@gmail.com'; // Replace with actual customer email
       
       const response = await fetch('/api/send-invoice-email', {
         method: 'POST',
