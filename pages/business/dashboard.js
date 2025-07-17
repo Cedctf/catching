@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import AnalyticsCard from '../../components/AnalyticsCard';
+import SimpleBarChart from '../../components/SimpleBarChart';
 
 export default function BusinessDashboard() {
   const [transactions, setTransactions] = useState([]);
   const [invoices, setInvoices] = useState([]);
-  const [totalBalance, setTotalBalance] = useState(0);
+  const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -13,22 +15,19 @@ export default function BusinessDashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      const [transactionsRes, invoicesRes] = await Promise.all([
+      const [transactionsRes, invoicesRes, analyticsRes] = await Promise.all([
         fetch('/api/business/transactions'),
-        fetch('/api/business/invoices')
+        fetch('/api/business/invoices'),
+        fetch('/api/business/analytics')
       ]);
 
       const transactionsData = await transactionsRes.json();
       const invoicesData = await invoicesRes.json();
+      const analyticsData = await analyticsRes.json();
 
       setTransactions(transactionsData.transactions || []);
       setInvoices(invoicesData.invoices || []);
-      
-      // Calculate total balance from completed transactions
-      const balance = transactionsData.transactions
-        ?.filter(t => t.transaction_status === 'completed')
-        .reduce((sum, t) => sum + t.amount, 0) || 0;
-      setTotalBalance(balance);
+      setAnalytics(analyticsData.analytics || null);
       
       setLoading(false);
     } catch (error) {
@@ -39,6 +38,10 @@ export default function BusinessDashboard() {
 
   const formatCurrency = (amount) => {
     return `RM ${amount.toFixed(2)}`;
+  };
+
+  const formatPercentage = (value) => {
+    return `${value.toFixed(1)}%`;
   };
 
   const formatDate = (dateString) => {
@@ -80,44 +83,109 @@ export default function BusinessDashboard() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <span className="text-2xl">💰</span>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Balance</p>
-                <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalBalance)}</p>
-              </div>
+        {/* Analytics Overview */}
+        {analytics && (
+          <>
+            {/* Primary Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+              <AnalyticsCard
+                title="Total Revenue"
+                value={formatCurrency(analytics.revenue)}
+                subtitle={`Net Balance: ${formatCurrency(analytics.balance)}`}
+                icon="💰"
+                color="green"
+              />
+              
+              <AnalyticsCard
+                title="Transactions"
+                value={analytics.totalTransactions}
+                subtitle={`${analytics.completedTransactions} completed`}
+                icon="📊"
+                color="blue"
+              />
+              
+              <AnalyticsCard
+                title="Invoices"
+                value={analytics.totalInvoices}
+                subtitle={`${analytics.paidInvoices} paid`}
+                icon="📄"
+                color="purple"
+              />
+              
+              <AnalyticsCard
+                title="Success Rate"
+                value={formatPercentage(analytics.successRate)}
+                subtitle={`Avg: ${formatCurrency(analytics.avgTransactionValue)}`}
+                icon="📈"
+                color="yellow"
+              />
             </div>
-          </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <span className="text-2xl">📊</span>
+            {/* Secondary Analytics */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              {/* Payment Methods Breakdown */}
+              <div className="bg-white rounded-lg shadow p-6">
+                <h3 className="text-lg font-semibold mb-4">Payment Methods</h3>
+                <div className="space-y-3">
+                  {Object.entries(analytics.paymentMethods).map(([method, amount]) => (
+                    <div key={method} className="flex justify-between items-center">
+                      <span className="text-sm font-medium text-gray-600">{method}</span>
+                      <span className="text-sm font-bold text-gray-900">{formatCurrency(amount)}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Transactions</p>
-                <p className="text-2xl font-bold text-gray-900">{transactions.length}</p>
-              </div>
-            </div>
-          </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <span className="text-2xl">📄</span>
+              {/* Monthly Summary */}
+              <div className="bg-white rounded-lg shadow p-6">
+                <h3 className="text-lg font-semibold mb-4">This Month</h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-600">Revenue</span>
+                    <span className="text-sm font-bold text-green-600">{formatCurrency(analytics.monthlyRevenue)}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-600">Pending</span>
+                    <span className="text-sm font-bold text-yellow-600">{formatCurrency(analytics.pendingAmount)}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-600">Failed</span>
+                    <span className="text-sm font-bold text-red-600">{formatCurrency(analytics.failedAmount)}</span>
+                  </div>
+                </div>
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Invoices</p>
-                <p className="text-2xl font-bold text-gray-900">{invoices.length}</p>
+
+              {/* Invoice Status */}
+              <div className="bg-white rounded-lg shadow p-6">
+                <h3 className="text-lg font-semibold mb-4">Invoice Status</h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-600">Paid</span>
+                    <span className="text-sm font-bold text-green-600">{analytics.paidInvoices}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-600">Pending</span>
+                    <span className="text-sm font-bold text-yellow-600">{analytics.pendingInvoices}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-600">Overdue</span>
+                    <span className="text-sm font-bold text-red-600">{analytics.overdueInvoices}</span>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
+
+            {/* Daily Revenue Chart */}
+            <SimpleBarChart
+              title="Daily Revenue (Last 7 Days)"
+              data={analytics.dailyRevenue.map(day => ({
+                label: new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' }),
+                value: day.revenue
+              }))}
+              formatValue={formatCurrency}
+            />
+          </>
+        )}
 
         {/* Recent Transactions */}
         <div className="bg-white rounded-lg shadow mb-8">
