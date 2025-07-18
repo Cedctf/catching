@@ -278,14 +278,7 @@ export default function BusinessDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 pt-16">
-      {/* Header */}
-      <header className="bg-gray-50 border-bsticky top-16 z-30">
-        <div className="w-full px-10">
-          <div className="flex items-center justify-between h-12">
-            {/* Removed Business Dashboard title and notifications */}
-          </div>
-        </div>
-      </header>
+      
 
       <div className="w-full p-10">
         <div className="flex relative">
