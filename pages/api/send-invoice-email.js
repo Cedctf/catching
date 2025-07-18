@@ -4,7 +4,7 @@ import nodemailer from 'nodemailer';
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: '10mb', // Increase from default 1mb to 10mb
+      sizeLimit: '10mb', // Increase to 50mb to handle large PDF files
     },
   },
 }

@@ -1,11 +1,36 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  TrendingUp, 
+  TrendingDown, 
+  DollarSign, 
+  FileText, 
+  Users, 
+  CreditCard,
+  Calendar,
+  MoreVertical,
+  ArrowUpRight,
+  ArrowDownLeft,
+  CheckCircle,
+  Clock,
+  AlertCircle,
+  Settings,
+  Bell,
+  Plus,
+  X,
+  Share2,
+  Download
+} from 'lucide-react';
+import AnalyticsCard from '../../components/AnalyticsCard';
+import SimpleBarChart from '../../components/SimpleBarChart';
 
 export default function BusinessDashboard() {
   const [transactions, setTransactions] = useState([]);
   const [invoices, setInvoices] = useState([]);
-  const [totalBalance, setTotalBalance] = useState(0);
+  const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showQRModal, setShowQRModal] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
@@ -13,22 +38,19 @@ export default function BusinessDashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      const [transactionsRes, invoicesRes] = await Promise.all([
+      const [transactionsRes, invoicesRes, analyticsRes] = await Promise.all([
         fetch('/api/business/transactions'),
-        fetch('/api/business/invoices')
+        fetch('/api/business/invoices'),
+        fetch('/api/business/analytics')
       ]);
 
       const transactionsData = await transactionsRes.json();
       const invoicesData = await invoicesRes.json();
+      const analyticsData = await analyticsRes.json();
 
       setTransactions(transactionsData.transactions || []);
       setInvoices(invoicesData.invoices || []);
-      
-      // Calculate total balance from completed transactions
-      const balance = transactionsData.transactions
-        ?.filter(t => t.transaction_status === 'completed')
-        .reduce((sum, t) => sum + t.amount, 0) || 0;
-      setTotalBalance(balance);
+      setAnalytics(analyticsData.analytics || null);
       
       setLoading(false);
     } catch (error) {
@@ -38,7 +60,16 @@ export default function BusinessDashboard() {
   };
 
   const formatCurrency = (amount) => {
-    return `RM ${amount.toFixed(2)}`;
+    const numAmount = Number(amount) || 0;
+    return new Intl.NumberFormat('en-MY', {
+      style: 'currency',
+      currency: 'MYR',
+    }).format(numAmount);
+  };
+
+  const formatPercentage = (value) => {
+    const numValue = Number(value) || 0;
+    return `${numValue.toFixed(1)}%`;
   };
 
   const formatDate = (dateString) => {
@@ -51,215 +82,420 @@ export default function BusinessDashboard() {
     });
   };
 
-  if (loading) {
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'completed': return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case 'pending': return <Clock className="h-4 w-4 text-yellow-500" />;
+      case 'failed': return <AlertCircle className="h-4 w-4 text-red-500" />;
+      default: return null;
+    }
+  };
+
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'DuitNow QR Code',
+          text: 'Scan this QR code to make a payment',
+          url: window.location.origin + '/duitnowqr_whole_exported.jpg'
+        });
+      } catch (error) {
+        console.log('Error sharing:', error);
+      }
+    } else {
+      // Fallback: copy to clipboard
+      try {
+        await navigator.clipboard.writeText(window.location.origin + '/duitnowqr_whole_exported.jpg');
+        alert('QR code link copied to clipboard!');
+      } catch (error) {
+        console.log('Error copying to clipboard:', error);
+      }
+    }
+  };
+
+  const handleDownload = () => {
+    const link = document.createElement('a');
+    link.href = '/duitnowqr_whole_exported.jpg';
+    link.download = 'duitnow-qr-code.jpg';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const cardVariants = {
+    hidden: { opacity: 0, y: 50, rotateX: 15 },
+    visible: {
+      opacity: 1, y: 0, rotateX: 0,
+      transition: { duration: 0.8, ease: [0.25, 0.4, 0.25, 1] }
+    }
+  };
+
+  if (loading || !analytics) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading dashboard...</p>
+      <div className="relative w-full max-w-7xl mx-auto px-6 py-8">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            className="w-8 h-8 border-2 border-[#002fa7] border-t-transparent rounded-full"
+          />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="relative w-full max-w-7xl mx-auto px-6 py-8 space-y-6">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Business Dashboard</h1>
-              <p className="text-gray-600">Doe's Bakery</p>
+      <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Business Dashboard</h1>
+          <p className="text-gray-600">Monitor your business performance and transactions</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Link href="/invoice">
+            <motion.button 
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="flex items-center gap-2 bg-[#002fa7] hover:bg-[#002fa7]/90 text-white font-medium py-2 px-4 rounded-xl transition-colors duration-200 text-sm"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Create Invoice</span>
+            </motion.button>
+          </Link>
+          <button className="flex items-center gap-2 bg-white hover:bg-gray-50 text-gray-700 font-medium py-2 px-4 rounded-xl transition-colors duration-200 border border-gray-200 text-sm">
+            <Bell className="h-4 w-4" />
+            <span>Notifications</span>
+          </button>
+          <button className="flex items-center gap-2 bg-white hover:bg-gray-50 text-gray-700 font-medium py-2 px-4 rounded-xl transition-colors duration-200 border border-gray-200 text-sm">
+            <Settings className="h-4 w-4" />
+            <span>Settings</span>
+          </button>
+        </div>
+      </header>
+
+      {/* Analytics Overview */}
+      {analytics && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <motion.div
+            variants={cardVariants}
+            initial="hidden"
+            animate="visible"
+            className="p-6 bg-white border border-gray-200 rounded-3xl shadow-lg"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 bg-[#002fa7]/10 rounded-xl">
+                <DollarSign className="h-6 w-6 text-[#002fa7]" />
+              </div>
+              <div className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium ${
+                analytics.revenue?.growth >= 0 ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+              }`}>
+                {analytics.revenue?.growth >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownLeft className="h-3 w-3" />}
+                {formatPercentage(Math.abs(analytics.revenue?.growth || 0))}
+              </div>
             </div>
-            <Link href="/" className="text-blue-600 hover:text-blue-800">
-              ← Back to Home
+            <div className="space-y-1">
+              <h3 className="text-sm font-medium text-gray-600">Total Revenue</h3>
+              <p className="text-2xl font-bold text-gray-900">{formatCurrency(analytics.revenue?.total || 0)}</p>
+            </div>
+          </motion.div>
+
+          <motion.div
+            variants={cardVariants}
+            initial="hidden"
+            animate="visible"
+            className="p-6 bg-white border border-gray-200 rounded-3xl shadow-lg"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 bg-green-100 rounded-xl">
+                <FileText className="h-6 w-6 text-green-600" />
+              </div>
+              <div className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium ${
+                analytics.invoices?.growth >= 0 ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+              }`}>
+                {analytics.invoices?.growth >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownLeft className="h-3 w-3" />}
+                {formatPercentage(Math.abs(analytics.invoices?.growth || 0))}
+              </div>
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-sm font-medium text-gray-600">Total Invoices</h3>
+              <p className="text-2xl font-bold text-gray-900">{analytics.invoices?.total || 0}</p>
+            </div>
+          </motion.div>
+
+          <motion.div
+            variants={cardVariants}
+            initial="hidden"
+            animate="visible"
+            className="p-6 bg-white border border-gray-200 rounded-3xl shadow-lg"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 bg-purple-100 rounded-xl">
+                <CreditCard className="h-6 w-6 text-purple-600" />
+              </div>
+              <div className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium ${
+                analytics.transactions?.growth >= 0 ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+              }`}>
+                {analytics.transactions?.growth >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownLeft className="h-3 w-3" />}
+                {formatPercentage(Math.abs(analytics.transactions?.growth || 0))}
+              </div>
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-sm font-medium text-gray-600">Transactions</h3>
+              <p className="text-2xl font-bold text-gray-900">{analytics.transactions?.total || 0}</p>
+            </div>
+          </motion.div>
+
+          <motion.div
+            variants={cardVariants}
+            initial="hidden"
+            animate="visible"
+            className="p-6 bg-white border border-gray-200 rounded-3xl shadow-lg"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 bg-orange-100 rounded-xl">
+                <Users className="h-6 w-6 text-orange-600" />
+              </div>
+              <div className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-600">
+                <ArrowUpRight className="h-3 w-3" />
+                {formatPercentage(analytics.successRate || 0)}
+              </div>
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-sm font-medium text-gray-600">Success Rate</h3>
+              <p className="text-2xl font-bold text-gray-900">{formatPercentage(analytics.successRate || 0)}</p>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {analytics && (
+          <motion.div
+            variants={cardVariants}
+            initial="hidden"
+            animate="visible"
+            className="lg:col-span-3 bg-white border border-gray-200 rounded-3xl shadow-lg p-6"
+          >
+            <SimpleBarChart 
+              data={analytics.dailyRevenue.map(day => ({
+                label: day.fullDate,
+                value: day.revenue
+              }))} 
+              title="Daily Revenue (Last 7 Days)"
+              formatValue={formatCurrency}
+            />
+          </motion.div>
+        )}
+
+        {analytics && (
+          <motion.div
+            variants={cardVariants}
+            initial="hidden"
+            animate="visible"
+            className="lg:col-span-1 bg-white border border-gray-200 rounded-3xl shadow-lg p-6"
+          >
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900">Business QR Code</h3>
+              <div className="flex flex-col items-center space-y-3">
+                <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                  <img 
+                    src="/duitnowqr.jpg" 
+                    alt="DuitNow QR Code" 
+                    className="w-48 h-48 object-contain"
+                  />
+                </div>
+                <div className="text-center">
+                  <button
+                    onClick={() => setShowQRModal(true)}
+                    className="text-sm text-[#002fa7] hover:text-[#002fa7]/80 font-medium underline"
+                  >
+                    Details
+                  </button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </div>
+
+      {/* Recent Transactions */}
+      <motion.div
+        variants={cardVariants}
+        initial="hidden"
+        animate="visible"
+        className="bg-white border border-gray-200 rounded-3xl shadow-lg"
+      >
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-900">Recent Transactions</h3>
+            <Link href="/business/transactions" className="text-[#002fa7] hover:text-[#002fa7]/80 font-medium text-sm">
+              View All
             </Link>
           </div>
         </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <span className="text-2xl">💰</span>
+        <div className="p-6">
+          <div className="space-y-4">
+            {transactions.slice(0, 5).map((transaction) => (
+              <div key={transaction.transaction_id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                <div className="flex items-center gap-4">
+                  <div className="p-2 bg-white rounded-xl border border-gray-200">
+                    {getStatusIcon(transaction.transaction_status)}
+                  </div>
+                  <div>
+                    <div className="font-medium text-gray-900">
+                      {transaction.payer_identity_token ? `Payment from ${transaction.payer_identity_token.substring(0, 8)}...` : 'Anonymous Payment'}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      {formatDate(transaction.transaction_date)} � {transaction.payment_method}
+                    </div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="font-semibold text-gray-900">{formatCurrency(transaction.amount || 0)}</div>
+                  <div className={`text-xs capitalize ${
+                    transaction.transaction_status === 'completed' ? 'text-green-600' :
+                    transaction.transaction_status === 'pending' ? 'text-yellow-600' :
+                    'text-red-600'
+                  }`}>
+                    {transaction.transaction_status}
+                  </div>
+                </div>
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Balance</p>
-                <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalBalance)}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <span className="text-2xl">📊</span>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Transactions</p>
-                <p className="text-2xl font-bold text-gray-900">{transactions.length}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <span className="text-2xl">📄</span>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Invoices</p>
-                <p className="text-2xl font-bold text-gray-900">{invoices.length}</p>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
+      </motion.div>
 
-        {/* Recent Transactions */}
-        <div className="bg-white rounded-lg shadow mb-8">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Recent Transactions</h2>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Transaction ID
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Amount
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Method
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {transactions.length === 0 ? (
-                  <tr>
-                    <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
-                      No transactions yet
-                    </td>
-                  </tr>
-                ) : (
-                  transactions.map((transaction) => (
-                    <tr key={transaction.transaction_id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">
-                        {transaction.transaction_id}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                        {formatCurrency(transaction.amount)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          transaction.payment_method === 'FACE' 
-                            ? 'bg-blue-100 text-blue-800' 
-                            : 'bg-green-100 text-green-800'
-                        }`}>
-                          {transaction.payment_method}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {formatDate(transaction.transaction_date)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          transaction.transaction_status === 'completed'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          {transaction.transaction_status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+      {/* Recent Invoices */}
+      <motion.div
+        variants={cardVariants}
+        initial="hidden"
+        animate="visible"
+        className="bg-white border border-gray-200 rounded-3xl shadow-lg"
+      >
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-900">Recent Invoices</h3>
+            <Link href="/invoice" className="text-[#002fa7] hover:text-[#002fa7]/80 font-medium text-sm">
+              View All
+            </Link>
           </div>
         </div>
-
-        {/* Recent Invoices */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Recent Invoices</h2>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Invoice Number
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Amount
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Created
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {invoices.length === 0 ? (
-                  <tr>
-                    <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
-                      No invoices yet
-                    </td>
-                  </tr>
-                ) : (
-                  invoices.map((invoice) => (
-                    <tr key={invoice.invoice_number} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">
-                        {invoice.invoice_number}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                        {formatCurrency(invoice.amount)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          invoice.status === 'paid'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          {invoice.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {formatDate(invoice.created_at)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        <Link 
-                          href={`/invoice/${invoice.invoice_number}`}
-                          className="text-blue-600 hover:text-blue-800"
-                        >
-                          View
-                        </Link>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+        <div className="p-6">
+          <div className="space-y-4">
+            {invoices.slice(0, 5).map((invoice) => {
+              const dueDate = new Date(invoice.due_date);
+              const isOverdue = dueDate < new Date() && invoice.status === 'pending';
+              
+              return (
+                <Link key={invoice.invoice_number} href={`/invoice/${invoice.invoice_number}`}>
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer">
+                    <div className="flex items-center gap-4">
+                      <div className="p-2 bg-white rounded-xl border border-gray-200">
+                        <FileText className={`h-4 w-4 ${
+                          invoice.status === 'paid' ? 'text-green-500' :
+                          isOverdue ? 'text-red-500' : 'text-yellow-500'
+                        }`} />
+                      </div>
+                      <div>
+                        <div className="font-medium text-gray-900">
+                          Invoice #{invoice.invoice_number}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          Due: {formatDate(invoice.due_date)} � Created: {formatDate(invoice.created_at)}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-semibold text-gray-900">{formatCurrency(invoice.amount || 0)}</div>
+                      <div className={`text-xs capitalize ${
+                        invoice.status === 'paid' ? 'text-green-600' :
+                        isOverdue ? 'text-red-600' : 'text-yellow-600'
+                      }`}>
+                        {isOverdue ? 'Overdue' : invoice.status}
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </div>
-      </div>
+      </motion.div>
+
+      {/* QR Code Modal */}
+      <AnimatePresence>
+        {showQRModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+            onClick={() => setShowQRModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              className="bg-white rounded-3xl shadow-xl max-w-md w-full p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-gray-900">DuitNow QR Code</h3>
+                <button
+                  onClick={() => setShowQRModal(false)}
+                  className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
+                >
+                  <X className="h-5 w-5 text-gray-500" />
+                </button>
+              </div>
+
+              {/* QR Code Image */}
+              <div className="flex justify-center mb-6">
+                <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                  <img 
+                    src="/duitnowqr_whole_exported.jpg" 
+                    alt="DuitNow QR Code - Full" 
+                    className="w-64 h-auto object-contain"
+                  />
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleShare}
+                  className="flex-1 flex items-center justify-center gap-2 bg-[#002fa7] hover:bg-[#002fa7]/90 text-white font-medium py-3 px-4 rounded-xl transition-colors"
+                >
+                  <Share2 className="h-4 w-4" />
+                  Share
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleDownload}
+                  className="flex-1 flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-4 rounded-xl transition-colors"
+                >
+                  <Download className="h-4 w-4" />
+                  Download
+                </motion.button>
+              </div>
+
+              {/* Instructions */}
+              <div className="mt-4 text-center">
+                <p className="text-sm text-gray-500">
+                  Scan this QR code with any participating bank or e-wallet app to make a payment
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

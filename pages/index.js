@@ -1,122 +1,142 @@
-import Image from "next/image";
 import Link from "next/link";
-import { Geist, Geist_Mono } from "next/font/google";
+import { useState } from "react";
+import { Inter, Poppins } from "next/font/google";
+import Navbar from "../components/Navbar";
+import ScrollExpandMedia from "../components/scroll-expansion-hero";
+import { FlippingCard } from "../components/flipping-card";
+import { 
+  FaceRecognitionIcon, 
+  QRCodeIcon, 
+  InvoiceIcon,
+} from "../components/FeatureIcons";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const poppins = Poppins({
+  variable: "--font-poppins",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
 });
 
 export default function Home() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user] = useState({
+    name: "John Doe",
+    email: "john@example.com",
+    avatar: "JD"
+  });
+
+  const features = [
+    {
+      icon: <FaceRecognitionIcon />,
+      title: "Face Recognition",
+      description: "Secure biometric authentication for instant payments. No cards, no cash, just your face.",
+      color: "blue"
+    },
+    {
+      icon: <QRCodeIcon />,
+      title: "QR Code Payments",
+      description: "Quick and easy QR code scanning for contactless payments anywhere, anytime.",
+      color: "green"
+    },
+    {
+      icon: <InvoiceIcon />,
+      title: "E-Invoicing",
+      description: "Automatic invoice generation and digital receipts for every transaction.",
+      color: "purple"
+    }
+  ];
+
   return (
-    <div
-      className={`${geistSans.className} ${geistMono.className} font-sans min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100`}
-    >
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xl">C</span>
-              </div>
-              <h1 className="text-2xl font-bold text-gray-900">Catching</h1>
-            </div>
-            <nav className="flex space-x-4">
-              <Link href="/payment/start" className="text-blue-600 hover:text-blue-800 font-medium">
-                Pay Now
-              </Link>
-              <Link href="/business/dashboard" className="text-gray-600 hover:text-gray-800 font-medium">
-                Business
-              </Link>
-            </nav>
-          </div>
-        </div>
-      </header>
+    <div className={`${inter.variable} ${poppins.variable} font-sans bg-white`}>
+      {/* Navbar */}
+      <Navbar isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} user={user} />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      {/* Main Content Container */}
+      <div className="bg-white">
         {/* Hero Section */}
-        <div className="text-center mb-16">
-          <h2 className="text-5xl font-bold text-gray-900 mb-6">
-            The Future of <span className="text-blue-600">Digital Payments</span>
-          </h2>
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            Experience seamless, secure payments with face recognition and QR code technology. 
-            Fast, reliable, and built for the modern world.
-          </p>
-          <div className="flex gap-4 justify-center">
-            <Link href="/payment/start">
-              <button className="bg-blue-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-blue-700 transition-colors">
-                Start Payment
-              </button>
-            </Link>
-            <Link href="/business/dashboard">
-              <button className="border border-gray-300 text-gray-700 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-50 transition-colors">
-                Business Dashboard
-              </button>
-            </Link>
-          </div>
-        </div>
+        <section className="h-screen bg-white">
+          <ScrollExpandMedia
+            mediaType="image"
+            mediaSrc="/face.png"
+            bgImageSrc=""
+            title="The Future of | Digital Payments"
+            scrollToExpand="Experience seamless, secure payments with face recognition and QR code technology. Fast, reliable, and built for the modern world."
+            textBlend={false}
+          >
+          </ScrollExpandMedia>
+        </section>
 
-        {/* Features Grid */}
-        <div className="grid md:grid-cols-3 gap-8 mb-16">
-          <div className="bg-white rounded-2xl p-8 shadow-lg">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-6">
-              <span className="text-lg font-bold">FACE</span>
+        {/* Features Section */}
+        <section className="bg-white py-24">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 className="text-4xl font-bold text-center mb-12">
+              Experience Next-Gen Payment Features
+            </h2>
+            <div className="grid md:grid-cols-3 gap-6 mb-16 place-items-center justify-center max-w-6xl mx-auto">
+              {features.map((feature, index) => (
+                <FlippingCard
+                  key={index}
+                  frontContent={
+                    <div className="h-full w-full flex flex-col items-center justify-center p-4 text-center">
+                      <div className={`w-16 h-16 bg-${feature.color}-50 rounded-full flex items-center justify-center mb-4`}>
+                        {feature.icon}
+                      </div>
+                      <h3 className="text-xl font-bold text-gray-900">{feature.title}</h3>
+                    </div>
+                  }
+                  backContent={
+                    <div className="h-full w-full flex flex-col items-center justify-center p-6 text-center">
+                      <div className="space-y-4">
+                        <p className="text-base text-gray-600 leading-relaxed">
+                          {feature.description}
+                        </p>
+                      </div>
+                    </div>
+                  }
+                  height={250}
+                  width={300}
+                />
+              ))}
             </div>
-            <h3 className="text-xl font-semibold mb-4">Face Recognition</h3>
-            <p className="text-gray-600">
-              Secure biometric authentication for instant payments. No cards, no cash, just your face.
-            </p>
-          </div>
-
-          <div className="bg-white rounded-2xl p-8 shadow-lg">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-6">
-              <span className="text-lg font-bold">QR</span>
+            
+            {/* Demo CTA */}
+            <div className="text-center max-w-3xl mx-auto">
+              <h3 className="text-2xl font-bold mb-4">Try the Demo</h3>
+              <p className="text-lg text-gray-600 mb-6">
+                Experience our payment simulation with mock data. No real money involved!
+              </p>
+              <Link href="/payment/start">
+                <button className="bg-gradient-to-r from-[#002fa7] to-purple-600 text-white px-6 py-3 rounded-full text-lg font-semibold hover:from-[#002fa7]/90 hover:to-purple-700 transition-all transform hover:scale-105">
+                  Start Demo Payment
+                </button>
+              </Link>
             </div>
-            <h3 className="text-xl font-semibold mb-4">QR Code Payments</h3>
-            <p className="text-gray-600">
-              Quick and easy QR code scanning for contactless payments anywhere, anytime.
-            </p>
           </div>
+        </section>
 
-          <div className="bg-white rounded-2xl p-8 shadow-lg">
-            <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-6">
-              <span className="text-lg font-bold">INV</span>
+        {/* Footer Section */}
+        <footer className="py-8 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center text-gray-600">
+              <p>&copy; 2025 PayID - Digital Payment Platform</p>
             </div>
-            <h3 className="text-xl font-semibold mb-4">E-Invoicing</h3>
-            <p className="text-gray-600">
-              Automatic invoice generation and digital receipts for every transaction.
-            </p>
           </div>
-        </div>
+        </footer>
+      </div>
 
-        {/* Demo Section */}
-        <div className="bg-white rounded-2xl p-8 shadow-lg text-center">
-          <h3 className="text-2xl font-semibold mb-4">Try the Demo</h3>
-          <p className="text-gray-600 mb-6">
-            Experience our payment simulation with mock data. No real money involved!
-          </p>
-          <div className="flex gap-4 justify-center">
-            <Link href="/payment/start">
-              <button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all">
-                Start Demo Payment
-              </button>
-            </Link>
-          </div>
-        </div>
-      </main>
-
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center py-8">
-        <div className="text-center text-gray-600">
-          <p>&copy; 2025 Catching - Digital Payment Platform</p>
-        </div>
-      </footer>
+      <style jsx global>{`
+        html {
+          background: white;
+        }
+        body {
+          background: white;
+        }
+      `}</style>
     </div>
   );
 }
