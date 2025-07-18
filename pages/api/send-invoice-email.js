@@ -15,73 +15,162 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
-  console.log('Email API called');
-  console.log('Environment variables:', {
-    EMAIL_USER: process.env.EMAIL_USER ? 'Set' : 'Not set',
-    EMAIL_PASS: process.env.EMAIL_PASS ? 'Set' : 'Not set'
-  });
+  console.log('=== Email API Called ===');
+  console.log('Request headers:', req.headers);
+  
+  // Test email configuration if requested
+  if (req.headers['x-test-email'] === 'true') {
+    try {
+      console.log('Testing email configuration...');
+      
+      if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+        console.error('Missing email credentials:', {
+          hasEmailUser: !!process.env.EMAIL_USER,
+          hasEmailPass: !!process.env.EMAIL_PASS
+        });
+        return res.status(500).json({
+          message: 'Email configuration not found',
+          details: 'Missing email credentials in environment variables'
+        });
+      }
+
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS.replace(/\s/g, ''),
+        },
+        debug: true,
+        logger: true
+      });
+
+      console.log('Verifying email configuration...');
+      await transporter.verify();
+      console.log('Email configuration verified successfully');
+      
+      return res.status(200).json({
+        message: 'Email configuration is valid',
+        email: process.env.EMAIL_USER
+      });
+    } catch (error) {
+      console.error('Email configuration test failed:', {
+        error: error.message,
+        code: error.code,
+        command: error.command
+      });
+      return res.status(500).json({
+        message: 'Email configuration test failed',
+        error: error.message,
+        details: {
+          code: error.code,
+          command: error.command
+        }
+      });
+    }
+  }
+
+  // Check environment variables
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    console.error('Missing email credentials');
+    return res.status(500).json({ 
+      message: 'Email configuration not found',
+      error: 'Missing EMAIL_USER or EMAIL_PASS environment variables',
+      details: 'Please check your .env.local file'
+    });
+  }
 
   let pdfFile = null;
+  let recipientEmail = null;
 
   try {
-    // Use OS temp directory for better Windows compatibility
+    // Use OS temp directory
     const tempDir = os.tmpdir();
     console.log('Using temp directory:', tempDir);
     
-    // Parse the form data
+    // Parse form data with formidable v3 syntax
+    console.log('Creating formidable form...');
     const form = formidable({
       uploadDir: tempDir,
       keepExtensions: true,
-      maxFileSize: 20 * 1024 * 1024, // 20MB limit
+      maxFileSize: 20 * 1024 * 1024,
+      allowEmptyFiles: false,
+      minFileSize: 1
     });
 
-    const [fields, files] = await form.parse(req);
-    console.log('Form parsed successfully');
-    
-    const email = Array.isArray(fields.email) ? fields.email[0] : fields.email;
-    pdfFile = Array.isArray(files.pdf) ? files.pdf[0] : files.pdf;
+    console.log('Parsing form data...');
+    try {
+      const [fields, files] = await form.parse(req);
+      
+      console.log('Form data parsed successfully:', {
+        fieldKeys: Object.keys(fields),
+        fileKeys: Object.keys(files)
+      });
 
-    console.log('Email recipient:', email);
-    console.log('PDF file:', pdfFile ? 'Received' : 'Not received');
+      // Handle fields and files (they might be arrays in v3)
+      recipientEmail = Array.isArray(fields.email) ? fields.email[0] : fields.email;
+      pdfFile = Array.isArray(files.pdf) ? files.pdf[0] : files.pdf;
 
-    if (!email || !pdfFile) {
-      return res.status(400).json({ message: 'Email and PDF file are required' });
+      console.log('Extracted data:', {
+        email: recipientEmail,
+        hasPDF: !!pdfFile
+      });
+
+      if (!recipientEmail) {
+        throw new Error('Missing recipient email address');
+      }
+
+      if (!pdfFile) {
+        throw new Error('Missing PDF file attachment');
+      }
+
+      console.log('PDF file validation:', {
+        originalFilename: pdfFile.originalFilename,
+        newFilename: pdfFile.newFilename,
+        size: pdfFile.size,
+        mimetype: pdfFile.mimetype,
+        filepath: pdfFile.filepath,
+        exists: fs.existsSync(pdfFile.filepath)
+      });
+
+      if (!fs.existsSync(pdfFile.filepath)) {
+        throw new Error('PDF file not found in temp directory');
+      }
+
+      if (pdfFile.size === 0) {
+        throw new Error('PDF file is empty');
+      }
+
+    } catch (parseError) {
+      console.error('Form parsing failed:', parseError);
+      throw new Error(`Form parsing failed: ${parseError.message}`);
     }
 
-    // Check if environment variables are set
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-      console.error('Email credentials not found in environment variables');
-      return res.status(500).json({ message: 'Email configuration not found' });
-    }
-
-    // Create transporter with better error handling
+    // Create transporter
+    console.log('Creating email transporter...');
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS.replace(/\s/g, ''), // Remove any spaces from app password
+        pass: process.env.EMAIL_PASS.replace(/\s/g, ''),
       },
-      debug: true, // Enable debug mode
+      debug: true,
+      logger: true
     });
 
-    console.log('Transporter created');
-
-    // Verify transporter configuration
+    // Verify transporter
+    console.log('Verifying email configuration...');
     try {
       await transporter.verify();
-      console.log('Email transporter verified successfully');
+      console.log('Email configuration verified successfully');
     } catch (verifyError) {
-      console.error('Email transporter verification failed:', verifyError);
-      return res.status(500).json({ 
-        message: 'Email configuration verification failed',
-        error: verifyError.message 
-      });
+      console.error('Email verification failed:', verifyError);
+      throw new Error(`Email configuration verification failed: ${verifyError.message}`);
     }
 
-    // Email options
+    // Prepare email
     const mailOptions = {
       from: process.env.EMAIL_USER,
-      to: email,
+      to: recipientEmail,
       subject: 'Invoice from Catching Payment System',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -106,27 +195,56 @@ export default async function handler(req, res) {
       ],
     };
 
-    console.log('Sending email to:', email);
+    console.log('Sending email to:', recipientEmail);
+    console.log('Email options:', {
+      from: mailOptions.from,
+      to: mailOptions.to,
+      subject: mailOptions.subject,
+      attachmentCount: mailOptions.attachments.length
+    });
     
     // Send email
-    const info = await transporter.sendMail(mailOptions);
-    console.log('Email sent successfully:', info.messageId);
+    try {
+      const info = await transporter.sendMail(mailOptions);
+      console.log('Email sent successfully:', {
+        messageId: info.messageId,
+        response: info.response,
+        accepted: info.accepted,
+        rejected: info.rejected
+      });
 
-    // Clean up the temporary file
-    if (fs.existsSync(pdfFile.filepath)) {
-      fs.unlinkSync(pdfFile.filepath);
-      console.log('Temporary file cleaned up');
+      // Clean up
+      if (fs.existsSync(pdfFile.filepath)) {
+        fs.unlinkSync(pdfFile.filepath);
+        console.log('Temporary file cleaned up');
+      }
+
+      return res.status(200).json({ 
+        message: 'Email sent successfully',
+        messageId: info.messageId,
+        recipient: recipientEmail,
+        details: {
+          accepted: info.accepted,
+          rejected: info.rejected
+        }
+      });
+
+    } catch (sendError) {
+      console.error('Email sending failed:', sendError);
+      throw new Error(`Email sending failed: ${sendError.message}`);
     }
 
-    res.status(200).json({ 
-      message: 'Email sent successfully',
-      messageId: info.messageId 
-    });
-
   } catch (error) {
-    console.error('Detailed error sending email:', error);
+    console.error('=== Email API Error ===');
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      code: error.code,
+      command: error.command,
+      name: error.name
+    });
     
-    // Clean up any temporary files in case of error
+    // Clean up on error
     if (pdfFile && pdfFile.filepath && fs.existsSync(pdfFile.filepath)) {
       try {
         fs.unlinkSync(pdfFile.filepath);
@@ -136,10 +254,16 @@ export default async function handler(req, res) {
       }
     }
 
-    res.status(500).json({ 
+    // Return detailed error information
+    return res.status(500).json({ 
       message: 'Failed to send email', 
       error: error.message,
-      details: error.stack
+      details: {
+        code: error.code,
+        command: error.command,
+        name: error.name,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      }
     });
   }
 }

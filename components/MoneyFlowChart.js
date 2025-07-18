@@ -4,18 +4,18 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 // Sample data - replace with actual data from your backend
 const moneyInData = [
-  { name: 'Salary', value: 5000, color: '#002fa7' },
-  { name: 'Investments', value: 2000, color: '#34D399' },
-  { name: 'Freelance', value: 1500, color: '#818CF8' },
-  { name: 'Other', value: 500, color: '#F472B6' },
+  { name: 'Salary', value: 5000, color: 'var(--chart-1)' },
+  { name: 'Investments', value: 2000, color: 'var(--chart-2)' },
+  { name: 'Freelance', value: 1500, color: 'var(--chart-3)' },
+  { name: 'Other', value: 500, color: 'var(--chart-4)' },
 ];
 
 const moneyOutData = [
-  { name: 'Bills', value: 1200, color: '#EF4444' },
-  { name: 'Shopping', value: 800, color: '#F59E0B' },
-  { name: 'Food', value: 600, color: '#818CF8' },
-  { name: 'Transport', value: 400, color: '#10B981' },
-  { name: 'Other', value: 300, color: '#8B5CF6' },
+  { name: 'Bills', value: 1200, color: 'var(--destructive)' },
+  { name: 'Shopping', value: 800, color: 'var(--chart-2)' },
+  { name: 'Food', value: 600, color: 'var(--chart-3)' },
+  { name: 'Transport', value: 400, color: 'var(--chart-4)' },
+  { name: 'Other', value: 300, color: 'var(--chart-5)' },
 ];
 
 const renderActiveShape = (props) => {
@@ -104,11 +104,11 @@ export default function MoneyFlowChart() {
 
   return (
     <div 
-      className="bg-white rounded-3xl p-4 h-full"
+      className="bg-card rounded-3xl p-4 h-full"
       ref={chartRef}
     >
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-lg font-semibold text-gray-900">Money Flow</h3>
+        <h3 className="text-lg font-semibold text-card-foreground">Money Flow</h3>
         <div className="flex gap-2">
           <motion.button
             whileHover={{ scale: 1.02 }}
@@ -116,8 +116,8 @@ export default function MoneyFlowChart() {
             onClick={() => setFlowType('in')}
             className={`px-2.5 py-1 rounded-lg text-sm font-medium transition-all duration-200 ${
               flowType === 'in'
-                ? 'bg-[#002fa7] text-white'
-                : 'bg-gray-100 text-gray-600 hover:text-gray-900 hover:bg-gray-200'
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80'
             }`}
           >
             Money In
@@ -128,8 +128,8 @@ export default function MoneyFlowChart() {
             onClick={() => setFlowType('out')}
             className={`px-2.5 py-1 rounded-lg text-sm font-medium transition-all duration-200 ${
               flowType === 'out'
-                ? 'bg-[#002fa7] text-white'
-                : 'bg-gray-100 text-gray-600 hover:text-gray-900 hover:bg-gray-200'
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80'
             }`}
           >
             Money Out
