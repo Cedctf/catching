@@ -275,6 +275,18 @@
       "weekday": "Friday",
       "payment_method": "FACE",
       "transaction_status": "completed"
+    },
+    {
+      "transaction_id": "txn-1752839423828-4l4ikxdfb",
+      "payer_identity_token": "demo_user_token",
+      "receiver_identity_token": "demo_business_token",
+      "business_identity_token": "demo_business_token",
+      "transaction_type": "payment",
+      "amount": 30,
+      "transaction_date": "2025-07-18T11:50:23.829Z",
+      "weekday": "Friday",
+      "payment_method": "FACE",
+      "transaction_status": "completed"
     }
   ]
 }

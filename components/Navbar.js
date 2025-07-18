@@ -13,16 +13,18 @@ export default function Navbar({ isLoggedIn, setIsLoggedIn, user }) {
   const { t } = useTranslation();
   
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <h1 className="text-2xl font-black text-[#002fa7] font-poppins tracking-tight">PayID</h1>
+            <Link href="/" className="hover:opacity-80 transition-opacity">
+              <h1 className="text-2xl font-black text-[#002fa7] font-poppins tracking-tight">PayID</h1>
+            </Link>
           </div>
           <nav className="flex items-center space-x-6">
-            <LanguageSwitcher />
             {!isLoggedIn ? (
-              <>
+              <div className="flex items-center space-x-6">
+                <LanguageSwitcher />
                 <button 
                   onClick={() => setIsLoggedIn(true)}
                   className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
@@ -35,7 +37,7 @@ export default function Navbar({ isLoggedIn, setIsLoggedIn, user }) {
                 >
                   {t('nav.login')}
                 </button>
-              </>
+              </div>
             ) : (
               <div className="flex items-center space-x-6">
                 <Link href="/payment/start" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">
@@ -44,13 +46,16 @@ export default function Navbar({ isLoggedIn, setIsLoggedIn, user }) {
                 <Link href="/business/dashboard" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">
                   {t('nav.business')}
                 </Link>
+                <LanguageSwitcher />
                 <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-[#002fa7] rounded-full flex items-center justify-center">
-                    <span className="text-white text-sm font-medium">{user.avatar}</span>
-                  </div>
-                  <div className="text-sm">
-                    <div className="font-medium text-gray-900">{user.name}</div>
-                  </div>
+                  <Link href="/dashboard" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
+                    <div className="w-8 h-8 bg-[#002fa7] rounded-full flex items-center justify-center">
+                      <span className="text-white text-sm font-medium">{user.avatar}</span>
+                    </div>
+                    <div className="text-sm">
+                      <div className="font-medium text-gray-900">{user.name}</div>
+                    </div>
+                  </Link>
                   <button 
                     onClick={() => setIsLoggedIn(false)}
                     className="text-gray-600 hover:text-gray-900 text-sm transition-colors"
