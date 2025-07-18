@@ -260,20 +260,18 @@ export default function BusinessDashboard() {
             className="lg:col-span-1 bg-white border border-gray-200 rounded-3xl shadow-lg p-6"
           >
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900">Payment Methods</h3>
-              <div className="space-y-3">
-                {Object.entries(analytics.paymentMethods || {}).map(([method, data]) => (
-                  <div key={method} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-                    <div className="flex items-center gap-3">
-                      <div className="w-3 h-3 bg-[#002fa7] rounded-full"></div>
-                      <span className="font-medium text-gray-900 capitalize">{method}</span>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-sm font-medium text-gray-900">{data.count || 0}</div>
-                      <div className="text-xs text-gray-500">{formatPercentage(data.percentage || 0)}</div>
-                    </div>
-                  </div>
-                ))}
+              <h3 className="text-lg font-semibold text-gray-900">Business QR Code</h3>
+              <div className="flex flex-col items-center space-y-3">
+                <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                  <img 
+                    src="/duitnowqr.jpg" 
+                    alt="DuitNow QR Code" 
+                    className="w-48 h-48 object-contain"
+                  />
+                </div>
+                <div className="text-center">
+                  <p className="text-sm text-gray-500">Scan to pay</p>
+                </div>
               </div>
             </div>
           </motion.div>
