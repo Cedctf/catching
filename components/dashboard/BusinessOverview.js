@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   TrendingUp, 
@@ -14,13 +14,99 @@ import {
   AlertCircle,
   X,
   Share2,
-  Download
+  Download,
+  Plus
 } from 'lucide-react';
 import Link from 'next/link';
 import SimpleBarChart from '../SimpleBarChart';
+import { getAllAccounts, ACCOUNT_TYPES, formatAccountBalance } from '../../lib/accountData';
 
-export default function BusinessOverview({ businessData, onDataUpdate }) {
+export default function BusinessOverview({ businessData: initialData, onDataUpdate, onDownloadReport, onTabChange }) {
   const [showQRModal, setShowQRModal] = useState(false);
+  const [businessData, setBusinessData] = useState(initialData);
+  const [realtimeStatus, setRealtimeStatus] = useState('connecting');
+
+  // Setup real-time connection
+  useEffect(() => {
+    const eventSource = new EventSource('/api/business/realtime');
+
+    eventSource.onopen = () => {
+      setRealtimeStatus('connected');
+    };
+
+    eventSource.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      
+      switch (data.type) {
+        case 'transaction':
+          // Update transactions and analytics
+          setBusinessData(prev => {
+            const newTransactions = [data.transaction, ...(prev?.transactions || [])];
+            const newRevenue = (prev?.analytics?.revenue?.total || 0) + data.transaction.amount;
+            const newTransactionCount = (prev?.analytics?.transactions?.total || 0) + 1;
+            
+            return {
+              ...prev,
+              transactions: newTransactions,
+              analytics: {
+                ...prev?.analytics,
+                revenue: {
+                  ...prev?.analytics?.revenue,
+                  total: newRevenue
+                },
+                transactions: {
+                  ...prev?.analytics?.transactions,
+                  total: newTransactionCount
+                }
+              }
+            };
+          });
+          break;
+
+        case 'invoice':
+          // Update invoices
+          setBusinessData(prev => ({
+            ...prev,
+            invoices: [data.invoice, ...(prev?.invoices || [])],
+            analytics: {
+              ...prev?.analytics,
+              invoices: {
+                ...prev?.analytics?.invoices,
+                total: (prev?.analytics?.invoices?.total || 0) + 1
+              }
+            }
+          }));
+          break;
+      }
+    };
+
+    eventSource.onerror = () => {
+      setRealtimeStatus('disconnected');
+      eventSource.close();
+      // Try to reconnect after 5 seconds
+      setTimeout(() => {
+        setRealtimeStatus('connecting');
+      }, 5000);
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, []);
+
+  // Notify parent component of data updates
+  useEffect(() => {
+    if (onDataUpdate && businessData) {
+      onDataUpdate(businessData);
+    }
+  }, [businessData, onDataUpdate]);
+
+  // Update local state when prop changes
+  useEffect(() => {
+    if (initialData) {
+      setBusinessData(initialData);
+    }
+  }, [initialData]);
 
   const formatCurrency = (amount) => {
     const numAmount = Number(amount) || 0;
@@ -91,12 +177,74 @@ export default function BusinessOverview({ businessData, onDataUpdate }) {
     }
   };
 
+  const pageVariants = {
+    hidden: { opacity: 0, scale: 0.95 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      transition: {
+        duration: 0.6,
+        ease: "easeOut",
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const staggerContainer = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2
+      }
+    }
+  };
+
   const analytics = businessData?.analytics || {};
   const transactions = businessData?.transactions || [];
   const invoices = businessData?.invoices || [];
 
+  // Helper function to check if date is within last 7 days
+  const isWithinLast7Days = (dateString) => {
+    const transactionDate = new Date(dateString);
+    const today = new Date();
+    const sevenDaysAgo = new Date(today);
+    sevenDaysAgo.setDate(today.getDate() - 7);
+    return transactionDate >= sevenDaysAgo && transactionDate <= today;
+  };
+
+  // Calculate recent transactions for display (last 7 days)
+  const recentTransactions = transactions
+    .filter(t => t.transaction_status === 'completed' && isWithinLast7Days(t.transaction_date))
+    .slice(0, 5)
+    .map(transaction => ({
+      id: transaction.transaction_id,
+      date: new Date(transaction.transaction_date).toLocaleDateString('en-MY', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }),
+      amount: transaction.amount,
+      status: transaction.transaction_status,
+      paymentMethod: transaction.payment_method,
+      customer: `Customer ${transaction.transaction_id.slice(-3)}`
+    }));
+
+  // Calculate recent invoices for display (last 7 days)
+  const recentInvoices = invoices
+    .filter(invoice => isWithinLast7Days(invoice.created_at))
+    .slice(0, 5);
+
   return (
-    <div className="space-y-6">
+    <motion.div 
+      className="space-y-6"
+      variants={pageVariants}
+      initial="hidden"
+      animate="visible"
+    >
       {/* Header */}
       <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
@@ -118,7 +266,12 @@ export default function BusinessOverview({ businessData, onDataUpdate }) {
       </header>
 
       {/* Analytics Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <motion.div 
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+        variants={staggerContainer}
+        initial="hidden"
+        animate="visible"
+      >
         <motion.div
           variants={cardVariants}
           initial="hidden"
@@ -208,25 +361,47 @@ export default function BusinessOverview({ businessData, onDataUpdate }) {
             <p className="text-2xl font-bold text-gray-900">{formatPercentage(analytics.successRate || 0)}</p>
           </div>
         </motion.div>
-      </div>
+      </motion.div>
 
       {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <motion.div 
+        className="grid grid-cols-1 lg:grid-cols-4 gap-6"
+        variants={staggerContainer}
+        initial="hidden"
+        animate="visible"
+      >
         {analytics.dailyRevenue && (
           <motion.div
             variants={cardVariants}
             initial="hidden"
             animate="visible"
-            className="lg:col-span-3 bg-white border border-gray-200 rounded-3xl shadow-lg p-6"
+            className="lg:col-span-3 bg-white border border-gray-200 rounded-3xl shadow-lg"
           >
-            <SimpleBarChart 
-              data={analytics.dailyRevenue.map(day => ({
-                label: day.fullDate,
-                value: day.revenue
-              }))} 
-              title="Daily Revenue (Last 7 Days)"
-              formatValue={formatCurrency}
-            />
+            <div className="h-full flex flex-col">
+              <div className="px-6 pt-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-lg font-semibold text-gray-900">Daily Revenue (Last 7 Days)</h3>
+                  <button
+                    onClick={onDownloadReport}
+                    className="flex items-center space-x-2 px-3 py-1.5 bg-[#002fa7] text-white rounded-lg hover:bg-[#002fa7]/90 transition-colors"
+                  >
+                    <Download className="h-4 w-4" />
+                    <span>Today's Report</span>
+                  </button>
+                </div>
+              </div>
+              <div className="flex-1 flex items-end justify-center">
+                <div className="px-6 pt-6 pb-8 w-full">
+                  <SimpleBarChart 
+                    data={analytics.dailyRevenue.map(day => ({
+                      label: day.fullDate,
+                      value: day.revenue
+                    }))} 
+                    formatValue={formatCurrency}
+                  />
+                </div>
+              </div>
+            </div>
           </motion.div>
         )}
 
@@ -237,7 +412,7 @@ export default function BusinessOverview({ businessData, onDataUpdate }) {
           className="lg:col-span-1 bg-white border border-gray-200 rounded-3xl shadow-lg p-6"
         >
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">Business QR Code</h3>
+            <h3 className="text-lg font-semibold text-gray-900">DuitNow QR</h3>
             <div className="flex flex-col items-center space-y-3">
               <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
                 <img 
@@ -257,7 +432,7 @@ export default function BusinessOverview({ businessData, onDataUpdate }) {
             </div>
           </div>
         </motion.div>
-      </div>
+      </motion.div>
 
       {/* Recent Transactions */}
       <motion.div
@@ -268,42 +443,58 @@ export default function BusinessOverview({ businessData, onDataUpdate }) {
       >
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">Recent Transactions</h3>
-            <Link href="/business/transactions" className="text-[#002fa7] hover:text-[#002fa7]/80 font-medium text-sm">
+            <h3 className="text-lg font-semibold text-gray-900">Recent Transactions (Last 7 Days)</h3>
+            <button
+              onClick={() => {
+                if (onTabChange) {
+                  onTabChange('payments');
+                  // Set a flag to navigate to transactions section
+                  setTimeout(() => {
+                    const event = new CustomEvent('navigateToTransactions');
+                    window.dispatchEvent(event);
+                  }, 100);
+                }
+              }}
+              className="text-[#002fa7] hover:text-[#002fa7]/80 font-medium text-sm"
+            >
               View All
-            </Link>
+            </button>
           </div>
         </div>
         <div className="p-6">
+        {recentTransactions.length > 0 ? (
           <div className="space-y-4">
-            {transactions.slice(0, 5).map((transaction) => (
-              <div key={transaction.transaction_id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+            {recentTransactions.map((transaction) => (
+              <div key={transaction.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                 <div className="flex items-center gap-4">
-                  <div className="p-2 bg-white rounded-xl border border-gray-200">
-                    {getStatusIcon(transaction.transaction_status)}
+                  <div className="p-2 bg-green-100 rounded-full">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
                   </div>
                   <div>
-                    <div className="font-medium text-gray-900">
-                      {transaction.payer_identity_token ? `Payment from ${transaction.payer_identity_token.substring(0, 8)}...` : 'Anonymous Payment'}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      {formatDate(transaction.transaction_date)} • {transaction.payment_method}
-                    </div>
+                    <p className="font-medium text-gray-900">
+                      Payment from {transaction.customer}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {transaction.date} • {transaction.paymentMethod}
+                    </p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="font-semibold text-gray-900">{formatCurrency(transaction.amount || 0)}</div>
-                  <div className={`text-xs capitalize ${
-                    transaction.transaction_status === 'completed' ? 'text-green-600' :
-                    transaction.transaction_status === 'pending' ? 'text-yellow-600' :
-                    'text-red-600'
-                  }`}>
-                    {transaction.transaction_status}
-                  </div>
+                  <p className="font-semibold text-gray-900">
+                    {formatCurrency(transaction.amount)}
+                  </p>
+                  <p className="text-xs text-green-600 capitalize">
+                    {transaction.status}
+                  </p>
                 </div>
               </div>
             ))}
           </div>
+        ) : (
+          <div className="text-center text-gray-500">
+            No recent transactions to display
+          </div>
+        )}
         </div>
       </motion.div>
 
@@ -316,15 +507,18 @@ export default function BusinessOverview({ businessData, onDataUpdate }) {
       >
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">Recent Invoices</h3>
-            <Link href="/invoice" className="text-[#002fa7] hover:text-[#002fa7]/80 font-medium text-sm">
+            <h3 className="text-lg font-semibold text-gray-900">Recent Invoices (Last 7 Days)</h3>
+            <button
+              onClick={() => onTabChange && onTabChange('invoicing')}
+              className="text-[#002fa7] hover:text-[#002fa7]/80 font-medium text-sm"
+            >
               View All
-            </Link>
+            </button>
           </div>
         </div>
         <div className="p-6">
           <div className="space-y-4">
-            {invoices.slice(0, 5).map((invoice) => {
+            {recentInvoices.map((invoice) => {
               const dueDate = new Date(invoice.due_date);
               const isOverdue = dueDate < new Date() && invoice.status === 'pending';
               
@@ -362,69 +556,52 @@ export default function BusinessOverview({ businessData, onDataUpdate }) {
         </div>
       </motion.div>
 
-      {/* QR Code Modal */}
+      {/* QR Modal */}
       {showQRModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.8, opacity: 0 }}
-            className="bg-white rounded-3xl shadow-xl max-w-md w-full p-6"
-            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-xl shadow-xl max-w-md w-full p-6"
           >
-            {/* Modal Header */}
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-bold text-gray-900">DuitNow QR Code</h3>
               <button
                 onClick={() => setShowQRModal(false)}
-                className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
                 <X className="h-5 w-5 text-gray-500" />
               </button>
             </div>
-
-            {/* QR Code Image */}
-            <div className="flex justify-center mb-6">
+            <div className="flex flex-col items-center space-y-4">
               <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
                 <img 
                   src="/duitnowqr_whole_exported.jpg" 
-                  alt="DuitNow QR Code - Full" 
-                  className="w-64 h-auto object-contain"
+                  alt="DuitNow QR Code" 
+                  className="w-56 h-56 object-contain"
                 />
               </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-3">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handleShare}
-                className="flex-1 flex items-center justify-center gap-2 bg-[#002fa7] hover:bg-[#002fa7]/90 text-white font-medium py-3 px-4 rounded-xl transition-colors"
-              >
-                <Share2 className="h-4 w-4" />
-                Share
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handleDownload}
-                className="flex-1 flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-4 rounded-xl transition-colors"
-              >
-                <Download className="h-4 w-4" />
-                Download
-              </motion.button>
-            </div>
-
-            {/* Instructions */}
-            <div className="mt-4 text-center">
-              <p className="text-sm text-gray-500">
-                Scan this QR code with any participating bank or e-wallet app to make a payment
-              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={handleShare}
+                  className="flex items-center gap-2 bg-[#002fa7] hover:bg-[#002fa7]/90 text-white px-4 py-2 rounded-lg transition-colors"
+                >
+                  <Share2 className="h-4 w-4" />
+                  Share
+                </button>
+                <button
+                  onClick={handleDownload}
+                  className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition-colors"
+                >
+                  <Download className="h-4 w-4" />
+                  Download
+                </button>
+              </div>
             </div>
           </motion.div>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 } 

@@ -27,8 +27,19 @@ export default function InvoicingModule({ businessData, onDataUpdate }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
 
-  // Mock invoice data
-  const invoices = [
+  // Use real invoice data from businessData, with fallback to mock data
+  const invoices = businessData?.invoices?.map(invoice => ({
+    id: invoice.invoice_number,
+    customerName: invoice.customer_name || 'Unknown Customer',
+    customerEmail: invoice.customer_email || 'no-email@example.com',
+    amount: invoice.amount,
+    status: invoice.status,
+    dueDate: invoice.due_date,
+    createdDate: invoice.created_at,
+    description: invoice.description || 'Service Invoice',
+    items: invoice.items || []
+  })) || [
+    // Fallback mock data if no real data is available
     {
       id: 'INV-2024-001',
       customerName: 'Ahmad Ibrahim',
@@ -257,7 +268,7 @@ export default function InvoicingModule({ businessData, onDataUpdate }) {
         className="bg-white rounded-xl shadow-sm border border-gray-200"
       >
         <div className="p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-6">Recent Invoices</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-6">All Invoices</h3>
           <div className="space-y-4">
             {filteredInvoices.map((invoice) => (
               <div key={invoice.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">

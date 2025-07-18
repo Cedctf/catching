@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 
 const Layout = ({ children }) => {
   return (
-    <div className="min-h-screen w-full flex flex-col items-center bg-white px-4 sm:px-6 md:px-8 pb-8 pt-28 text-gray-900 overflow-hidden">
+    <div className="min-h-screen w-full flex flex-col items-center bg-white pb-8 pt-4 text-gray-900 overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-white z-0" />
       <div className="absolute inset-0 bg-white z-0" />
@@ -24,7 +24,7 @@ const Layout = ({ children }) => {
       </div>
 
       {/* Main Content */}
-      <div className="relative w-full max-w-7xl mx-auto space-y-6 z-20">
+      <div className="relative w-full z-20">
         {children}
       </div>
     </div>

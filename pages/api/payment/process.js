@@ -1,18 +1,12 @@
-import { addTransaction, addInvoice, generateTransactionId, generateInvoiceNumber } from '../../../lib/mockData';
-import { getCurrentDateString, getWeekdayName } from '../../../lib/dateUtils';
+import { addTransaction, generateTransactionId } from '../../../lib/mockData';
 
-export default function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
-  console.log('Payment API called with:', req.body);
-
   try {
     const { amount, paymentMethod } = req.body;
-    // For demo purposes, use default tokens
-    const payerToken = 'demo_user_token';
-    const receiverToken = 'demo_business_token';
 
     // Validate input
     if (!amount || !paymentMethod) {
@@ -29,65 +23,56 @@ export default function handler(req, res) {
       });
     }
 
-    // Generate transaction ID
-    const transactionId = generateTransactionId();
-    const invoiceNumber = generateInvoiceNumber();
-    const timestamp = getCurrentDateString();
-    const weekday = getWeekdayName(timestamp);
-
-    // Create transaction object
+    // Create transaction record
     const transaction = {
-      transaction_id: transactionId,
-      payer_identity_token: payerToken,
-      receiver_identity_token: receiverToken,
-      business_identity_token: receiverToken,
+      transaction_id: generateTransactionId(),
+      payer_identity_token: 'encrypted_token_here',
+      receiver_identity_token: 'encrypted_business_token_here',
+      business_identity_token: 'encrypted_business_token_here',
       transaction_type: 'payment',
       amount: parseFloat(amount),
-      transaction_date: timestamp,
-      weekday: weekday,
+      transaction_date: new Date().toISOString(),
+      weekday: new Date().toLocaleDateString('en-US', { weekday: 'long' }),
       payment_method: paymentMethod.toUpperCase(),
       transaction_status: 'completed'
     };
 
-    // Create invoice object
-    const invoice = {
-      user_identity_token: payerToken,
-      business_identity_token: receiverToken,
-      invoice_number: invoiceNumber,
-      amount: parseFloat(amount),
-      due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 7 days from now
-      status: 'paid',
-      created_at: timestamp,
-      weekday: weekday
-    };
-
-    // Save transaction and invoice
+    // Save transaction to JSON file
     const transactionAdded = addTransaction(transaction);
-    const invoiceAdded = addInvoice(invoice);
-
-    if (!transactionAdded || !invoiceAdded) {
-      console.log('Duplicate payment detected, returning existing transaction');
+    
+    if (!transactionAdded) {
       return res.status(409).json({
         success: false,
-        message: 'Duplicate payment detected'
+        message: 'Duplicate transaction detected'
       });
     }
 
-    console.log('Payment processed successfully:', { transactionId, invoiceNumber });
+    // Broadcast update to all connected clients
+    if (global.connections) {
+      const update = {
+        type: 'transaction',
+        transaction
+      };
+      global.connections.forEach(sendUpdate => {
+        try {
+          sendUpdate(update);
+        } catch (error) {
+          console.error('Error sending update:', error);
+        }
+      });
+    }
 
     // Return success response
     res.status(200).json({
       success: true,
-      transactionId,
-      invoiceNumber,
+      transactionId: transaction.transaction_id,
       message: 'Payment processed successfully'
     });
-
   } catch (error) {
     console.error('Payment processing error:', error);
     res.status(500).json({
       success: false,
-      message: 'Internal server error'
+      message: 'Failed to process payment'
     });
   }
 }
