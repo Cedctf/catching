@@ -1,6 +1,8 @@
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { ArrowLeft, FileText, Download, Mail, Loader2, AlertCircle } from 'lucide-react';
 import EInvoice from '../../components/EInvoice';
 
 export default function InvoiceDetail() {
@@ -90,12 +92,23 @@ export default function InvoiceDetail() {
     };
   };
 
+  const cardVariants = {
+    hidden: { opacity: 0, y: 50, rotateX: 15 },
+    visible: {
+      opacity: 1, y: 0, rotateX: 0,
+      transition: { duration: 0.8, ease: [0.25, 0.4, 0.25, 1] }
+    }
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading invoice...</p>
+      <div className="relative w-full max-w-7xl mx-auto px-6 py-8">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            className="w-8 h-8 border-2 border-[#002fa7] border-t-transparent rounded-full"
+          />
         </div>
       </div>
     );
@@ -103,49 +116,91 @@ export default function InvoiceDetail() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-red-600 text-xl mb-4">{error}</div>
-          <Link href="/business/dashboard" className="text-blue-600 hover:text-blue-800">
-            Back to Dashboard
-          </Link>
+      <div className="relative w-full max-w-7xl mx-auto px-6 py-8">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center space-y-4"
+          >
+            <div className="p-4 bg-red-100 rounded-full w-fit mx-auto">
+              <AlertCircle className="h-8 w-8 text-red-600" />
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">Error Loading Invoice</h2>
+              <p className="text-gray-600 mb-4">{error}</p>
+              <Link href="/business/dashboard">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="bg-[#002fa7] hover:bg-[#002fa7]/90 text-white font-medium py-2 px-4 rounded-xl transition-colors duration-200"
+                >
+                  Back to Dashboard
+                </motion.button>
+              </Link>
+            </div>
+          </motion.div>
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-6xl mx-auto px-4">
-        {/* Header */}
-        <div className="mb-6">
-          <Link href="/business/dashboard" className="text-blue-600 hover:text-blue-800 mb-4 inline-block">
-            Back to Dashboard
-          </Link>
-          <h1 className="text-3xl font-bold text-gray-900">Invoice Details</h1>
-        </div>
+  const mergedData = getMergedData();
 
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          {/* Status Badge */}
-          <div className="mb-4 flex justify-between items-center">
-            <h2 className="text-xl font-semibold text-gray-900">
-              Invoice #{invoice.invoice_number || invoice.id}
-            </h2>
-            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-              invoice.status === 'paid' 
-                ? 'bg-green-100 text-green-800'
-                : invoice.status === 'overdue'
-                ? 'bg-red-100 text-red-800'
-                : 'bg-yellow-100 text-yellow-800'
-            }`}>
-              {invoice.status ? invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1) : 'Pending'}
-            </span>
+  return (
+    <div className="relative w-full max-w-7xl mx-auto px-6 py-8 space-y-6">
+      {/* Header */}
+      <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Link href="/business/dashboard">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="p-2 bg-[#002fa7]/10 hover:bg-[#002fa7]/20 rounded-xl transition-colors"
+            >
+              <ArrowLeft className="h-5 w-5 text-gray-700" />
+            </motion.button>
+          </Link>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Invoice Details</h1>
+            <p className="text-gray-600">Invoice {id}</p>
           </div>
-          
-          {/* EInvoice Component */}
-          <EInvoice {...getMergedData()} />
         </div>
-      </div>
+        <div className="flex items-center gap-3">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="flex items-center gap-2 bg-white hover:bg-gray-50 text-gray-700 font-medium py-2 px-4 rounded-xl transition-colors duration-200 border border-gray-200 text-sm"
+          >
+            <Download className="h-4 w-4" />
+            <span>Download</span>
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="flex items-center gap-2 bg-[#002fa7] hover:bg-[#002fa7]/90 text-white font-medium py-2 px-4 rounded-xl transition-colors duration-200 text-sm"
+          >
+            <Mail className="h-4 w-4" />
+            <span>Send Email</span>
+          </motion.button>
+        </div>
+      </header>
+
+      {/* Invoice Content */}
+      <motion.div
+        variants={cardVariants}
+        initial="hidden"
+        animate="visible"
+        className="bg-white border border-gray-200 rounded-3xl shadow-lg p-6"
+      >
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <FileText className="h-5 w-5" />
+            Invoice Preview
+          </h2>
+        </div>
+        <EInvoice {...mergedData} />
+      </motion.div>
     </div>
   );
 }

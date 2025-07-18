@@ -9,10 +9,13 @@ export default function handler(req, res) {
   console.log('Payment API called with:', req.body);
 
   try {
-    const { amount, paymentMethod, payerToken, receiverToken } = req.body;
+    const { amount, paymentMethod } = req.body;
+    // For demo purposes, use default tokens
+    const payerToken = 'demo_user_token';
+    const receiverToken = 'demo_business_token';
 
     // Validate input
-    if (!amount || !paymentMethod || !payerToken || !receiverToken) {
+    if (!amount || !paymentMethod) {
       return res.status(400).json({ 
         success: false, 
         message: 'Missing required fields' 
