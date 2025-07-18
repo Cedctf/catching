@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Inter, Poppins } from "next/font/google";
+import { useTranslation } from 'react-i18next';
 import Navbar from "../components/Navbar";
 import ScrollExpandMedia from "../components/scroll-expansion-hero";
 import { FlippingCard } from "../components/flipping-card";
@@ -23,6 +24,7 @@ const poppins = Poppins({
 });
 
 export default function Home() {
+  const { t } = useTranslation();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user] = useState({
     name: "John Doe",
@@ -33,20 +35,20 @@ export default function Home() {
   const features = [
     {
       icon: <FaceRecognitionIcon />,
-      title: "Face Recognition",
-      description: "Secure biometric authentication for instant payments. No cards, no cash, just your face.",
+      title: t('features.faceRecognition.title'),
+      description: t('features.faceRecognition.description'),
       color: "blue"
     },
     {
       icon: <QRCodeIcon />,
-      title: "QR Code Payments",
-      description: "Quick and easy QR code scanning for contactless payments anywhere, anytime.",
+      title: t('features.qrCode.title'),
+      description: t('features.qrCode.description'),
       color: "green"
     },
     {
       icon: <InvoiceIcon />,
-      title: "E-Invoicing",
-      description: "Automatic invoice generation and digital receipts for every transaction.",
+      title: t('features.eInvoicing.title'),
+      description: t('features.eInvoicing.description'),
       color: "purple"
     }
   ];
@@ -75,7 +77,7 @@ export default function Home() {
         <section className="bg-white py-24">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h2 className="text-4xl font-bold text-center mb-12">
-              Experience Next-Gen Payment Features
+              {t('features.title')}
             </h2>
             <div className="grid md:grid-cols-3 gap-6 mb-16 place-items-center justify-center max-w-6xl mx-auto">
               {features.map((feature, index) => (
@@ -106,13 +108,13 @@ export default function Home() {
             
             {/* Demo CTA */}
             <div className="text-center max-w-3xl mx-auto">
-              <h3 className="text-2xl font-bold mb-4">Try the Demo</h3>
+              <h3 className="text-2xl font-bold mb-4">{t('demo.title')}</h3>
               <p className="text-lg text-gray-600 mb-6">
-                Experience our payment simulation with mock data. No real money involved!
+                {t('demo.description')}
               </p>
               <Link href="/payment/start">
                 <button className="bg-gradient-to-r from-[#002fa7] to-purple-600 text-white px-6 py-3 rounded-full text-lg font-semibold hover:from-[#002fa7]/90 hover:to-purple-700 transition-all transform hover:scale-105">
-                  Start Demo Payment
+                  {t('demo.startButton')}
                 </button>
               </Link>
             </div>
@@ -123,7 +125,7 @@ export default function Home() {
         <footer className="py-8 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center text-gray-600">
-              <p>&copy; 2025 PayID - Digital Payment Platform</p>
+              <p>{t('footer.copyright')}</p>
             </div>
           </div>
         </footer>

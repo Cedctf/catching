@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import GlobalLanguageSwitcher from './GlobalLanguageSwitcher';
 
 const Layout = ({ children }) => {
   return (
@@ -22,6 +23,9 @@ const Layout = ({ children }) => {
           className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-white rounded-full blur-2xl"
         />
       </div>
+
+      {/* Global Language Switcher - Available on ALL pages */}
+      <GlobalLanguageSwitcher />
 
       {/* Main Content */}
       <div className="relative w-full max-w-7xl mx-auto space-y-6 z-20">
