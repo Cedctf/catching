@@ -279,28 +279,12 @@ export default function BusinessDashboard() {
   return (
     <div className="min-h-screen bg-gray-50 pt-16">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-16 z-30">
+      <header className="bg-gray-50 border-bsticky top-16 z-30">
         <div className="w-full px-10">
           <div className="flex items-center justify-between h-12">
-          <div style={{ marginLeft: '10rem' }}>
-              <h1 className="text-lg font-bold text-gray-900">Business Dashboard</h1>
-            </div>
-            
-            <div className="flex items-center space-x-3 mr-8">
-              {/* Notifications */}
-              <div className="relative">
-                <button className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors">
-                  <Bell className="h-5 w-5" />
-                  {notifications.length > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                      {notifications.length}
-                    </span>
-                  )}
-                </button>
-              </div>
-            </div>
-              </div>
-            </div>
+            {/* Removed Business Dashboard title and notifications */}
+          </div>
+        </div>
       </header>
 
       <div className="w-full p-10">

@@ -1,8 +1,8 @@
-import formidable from 'formidable';
-import nodemailer from 'nodemailer';
-import fs from 'fs';
-import path from 'path';
-import os from 'os';
+const formidable = require('formidable');
+const nodemailer = require('nodemailer');
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
 
 export const config = {
   api: {
@@ -29,7 +29,7 @@ export default async function handler(req, res) {
     console.log('Using temp directory:', tempDir);
     
     // Parse the form data
-    const form = formidable({
+    const form = new formidable.IncomingForm({
       uploadDir: tempDir,
       keepExtensions: true,
       maxFileSize: 20 * 1024 * 1024, // 20MB limit

@@ -141,11 +141,11 @@ export default function RegisterPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4 pt-40">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-2xl shadow-xl max-w-md w-full p-8"
+        className="bg-white rounded-2xl shadow-xl max-w-2xl w-full p-8"
       >
         {/* Header */}
         <div className="text-center mb-8">
