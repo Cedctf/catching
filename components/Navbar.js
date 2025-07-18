@@ -6,7 +6,7 @@ import LanguageSwitcher from './LanguageSwitcher';
 import { ScrollText } from 'lucide-react';
 import { useRouter } from 'next/router';
 import { ChevronDown, User } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 
 const poppins = Poppins({
@@ -19,6 +19,11 @@ const poppins = Poppins({
 export default function Navbar({ isLoggedIn, setIsLoggedIn, user, onStartTutorial }) {
   const { t } = useTranslation();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <div className="fixed top-0 left-0 right-0 bg-white z-50 border-b border-gray-100">
@@ -42,33 +47,33 @@ export default function Navbar({ isLoggedIn, setIsLoggedIn, user, onStartTutoria
                   className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 font-medium transition-colors"
                 >
                   <HelpCircle className="h-4 w-4" />
-                  <span>{t('nav.tutorial')}</span>
+                  <span>{mounted ? t('nav.tutorial') : 'Tutorial'}</span>
                 </button>
                 <LanguageSwitcher />
                 <Link 
                   href="/auth/register-business"
                   className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
                 >
-                  {t('nav.signup')}
+                  {mounted ? t('nav.signup') : 'Sign Up'}
                 </Link>
                 <Link 
                   href="/auth/login"
                   className="bg-[#002fa7] text-white px-6 py-2 rounded-full font-medium hover:bg-[#002fa7]/90 transition-all duration-300"
                 >
-                  {t('nav.login')}
+                  {mounted ? t('nav.login') : 'Login'}
                 </Link>
               </div>
             ) : (
               <div className="flex items-center space-x-6">
                 <Link href="/payment/start" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">
-                  {t('nav.payNow')}
+                  {mounted ? t('nav.payNow') : 'Pay Now'}
                 </Link>
                 <button
                   onClick={onStartTutorial}
                   className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 font-medium transition-colors"
                 >
                   <HelpCircle className="h-4 w-4" />
-                  <span>{t('nav.tutorial')}</span>
+                  <span>{mounted ? t('nav.tutorial') : 'Tutorial'}</span>
                 </button>
                 <LanguageSwitcher />
                 <div className="relative">
@@ -103,7 +108,7 @@ export default function Navbar({ isLoggedIn, setIsLoggedIn, user, onStartTutoria
                         }}
                         className="flex items-center space-x-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full text-left"
                       >
-                        <span>{t('nav.logout')}</span>
+                        <span>{mounted ? t('nav.logout') : 'Logout'}</span>
                       </button>
                     </div>
                   )}

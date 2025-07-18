@@ -300,7 +300,8 @@ export default function PaymentServices({ businessData: initialData, onDataUpdat
   };
 
   return (
-    <div className="space-y-6">
+    <div className="w-full px-4 xl:px-6">
+      <div className="w-full space-y-6">
       {/* Header with Live Updates */}
       <div className="flex items-center justify-between">
         <div>
@@ -583,7 +584,7 @@ export default function PaymentServices({ businessData: initialData, onDataUpdat
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
-                className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200"
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4 mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200"
               >
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
@@ -700,6 +701,7 @@ export default function PaymentServices({ businessData: initialData, onDataUpdat
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 } 

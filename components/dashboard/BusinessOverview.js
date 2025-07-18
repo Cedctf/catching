@@ -155,12 +155,13 @@ export default function BusinessOverview({ businessData, onDataUpdate, onDownloa
     .slice(0, 5);
 
   return (
-    <motion.div 
-      className="space-y-6"
-      variants={pageVariants}
-      initial="hidden"
-      animate="visible"
-    >
+    <div className="w-full px-4 xl:px-6">
+      <motion.div 
+        className="space-y-6"
+        variants={pageVariants}
+        initial="hidden"
+        animate="visible"
+      >
       {/* Header */}
       <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
@@ -183,7 +184,7 @@ export default function BusinessOverview({ businessData, onDataUpdate, onDownloa
 
       {/* Analytics Overview */}
       <motion.div 
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-4 xl:gap-6"
         variants={staggerContainer}
         initial="hidden"
         animate="visible"
@@ -281,7 +282,7 @@ export default function BusinessOverview({ businessData, onDataUpdate, onDownloa
 
       {/* Charts Section */}
       <motion.div 
-        className="grid grid-cols-1 lg:grid-cols-4 gap-6"
+        className="grid grid-cols-1 lg:grid-cols-4 gap-4 xl:gap-6"
         variants={staggerContainer}
         initial="hidden"
         animate="visible"
@@ -518,6 +519,7 @@ export default function BusinessOverview({ businessData, onDataUpdate, onDownloa
           </motion.div>
         </div>
       )}
-    </motion.div>
+      </motion.div>
+    </div>
   );
 } 

@@ -214,7 +214,8 @@ export default function TeamManagement({ businessData, onDataUpdate }) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="w-full px-4 xl:px-6">
+      <div className="w-full space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -231,7 +232,7 @@ export default function TeamManagement({ businessData, onDataUpdate }) {
       </div>
 
       {/* Team Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-4 xl:gap-6">
         <motion.div
           variants={cardVariants}
           initial="hidden"
@@ -590,6 +591,7 @@ export default function TeamManagement({ businessData, onDataUpdate }) {
           </motion.div>
         </div>
       )}
+      </div>
     </div>
   );
 } 

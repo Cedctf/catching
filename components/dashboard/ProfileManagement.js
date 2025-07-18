@@ -88,7 +88,8 @@ export default function ProfileManagement({ businessData, onDataUpdate }) {
   const readOnlyClass = "w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-700";
 
   return (
-    <div className="space-y-6">
+    <div className="w-full px-4 xl:px-6">
+      <div className="w-full space-y-6">
       {/* Profile Information */}
       <motion.div
         variants={cardVariants}
@@ -129,7 +130,7 @@ export default function ProfileManagement({ businessData, onDataUpdate }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-2 gap-6 xl:gap-8">
             {/* Personal Information */}
             <div className="space-y-6">
               <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
@@ -251,7 +252,7 @@ export default function ProfileManagement({ businessData, onDataUpdate }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-2 gap-6 xl:gap-8">
             {/* Face ID Status */}
             <div className="space-y-4">
               <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
@@ -407,6 +408,7 @@ export default function ProfileManagement({ businessData, onDataUpdate }) {
           </motion.div>
         </div>
       )}
+      </div>
     </div>
   );
 } 

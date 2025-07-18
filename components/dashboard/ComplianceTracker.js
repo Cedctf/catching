@@ -164,7 +164,8 @@ export default function ComplianceTracker({ businessData, onDataUpdate }) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="w-full px-4 xl:px-6">
+      <div className="w-full space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -203,7 +204,7 @@ export default function ComplianceTracker({ businessData, onDataUpdate }) {
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-4 xl:gap-6">
             <div className="text-center">
               <div className="text-3xl font-bold text-green-600">
                 {complianceItems.filter(item => item.status === 'verified').length}
@@ -554,6 +555,7 @@ export default function ComplianceTracker({ businessData, onDataUpdate }) {
           </motion.div>
         </div>
       )}
+      </div>
     </div>
   );
 } 

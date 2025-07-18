@@ -280,13 +280,13 @@ export default function BusinessDashboard() {
     <div className="min-h-screen bg-gray-50 pt-16">
       {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-16 z-30">
-        <div className="max-w-[1400px] mx-auto px-10">
+        <div className="w-full px-10">
           <div className="flex items-center justify-between h-12">
-        <div>
+          <div style={{ marginLeft: '10rem' }}>
               <h1 className="text-lg font-bold text-gray-900">Business Dashboard</h1>
             </div>
             
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-3 mr-8">
               {/* Notifications */}
               <div className="relative">
                 <button className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors">
@@ -303,7 +303,7 @@ export default function BusinessDashboard() {
             </div>
       </header>
 
-      <div className="max-w-[1400px] mx-auto p-10">
+      <div className="w-full p-10">
         <div className="flex relative">
           {/* Permanent Compact Sidebar */}
           <div className="fixed left-0 top-16 bottom-0 w-16 bg-white border-r border-gray-200 z-40">
@@ -403,25 +403,30 @@ export default function BusinessDashboard() {
 
           {/* Main Content */}
           <div className="flex-1 min-h-screen transition-all duration-300 pl-16">
-            <AnimatePresence mode="wait">
-      <motion.div
-                key={activeTab}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.3 }}
-                className="w-full"
-              >
-                {ActiveComponent && (
-                  <ActiveComponent 
-                    businessData={businessData} 
-                    onDataUpdate={handleDataUpdate}
-                    onDownloadReport={activeTab === 'overview' ? downloadTodayReport : undefined}
-                    onTabChange={activeTab === 'overview' ? handleTabChange : undefined}
-                  />
-                )}
-              </motion.div>
-            </AnimatePresence>
+            <div className="w-full h-full">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeTab}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="w-full h-full p-6"
+                  style={{ width: 'calc(100vw - 64px)' }}
+                >
+                  {ActiveComponent && (
+                    <div className="w-full" style={{ width: '100%', maxWidth: 'none' }}>
+                      <ActiveComponent 
+                        businessData={businessData} 
+                        onDataUpdate={handleDataUpdate}
+                        onDownloadReport={activeTab === 'overview' ? downloadTodayReport : undefined}
+                        onTabChange={activeTab === 'overview' ? handleTabChange : undefined}
+                      />
+                    </div>
+                  )}
+                </motion.div>
+              </AnimatePresence>
+            </div>
           </div>
         </div>
         </div>

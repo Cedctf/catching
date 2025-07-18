@@ -12,7 +12,8 @@ import {
   CreditCard,
   Building,
   Loader2,
-  FileText
+  FileText,
+  AlertCircle
 } from 'lucide-react';
 import EInvoice from '../../components/EInvoice';
 import html2canvas from 'html2canvas';
@@ -27,6 +28,8 @@ export default function PaymentSuccess() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [autoEmailStatus, setAutoEmailStatus] = useState('waiting'); // 'waiting', 'countdown', 'sending', 'sent', 'error'
+  const [countdown, setCountdown] = useState(3);
   const invoiceRef = useRef();
 
   useEffect(() => {
@@ -61,63 +64,91 @@ export default function PaymentSuccess() {
         setInvoiceData(data);
         
         // Auto-send email after invoice data is loaded and component is ready (3 seconds)
-        setTimeout(() => {
-          // Check if the invoice ref is available before sending email
-          if (invoiceRef.current) {
-            autoSendEmail(data, invoiceNumber);
-          } else {
-            // Retry after a short delay if ref is not ready
-            setTimeout(() => {
-              if (invoiceRef.current) {
-                autoSendEmail(data, invoiceNumber);
-              }
-            }, 1000);
-          }
-        }, 3000);
+        // Start auto-email countdown after invoice data is loaded
+        setAutoEmailStatus('countdown');
       }
     } catch (error) {
       console.error('Error fetching invoice data:', error);
     }
   };
 
-  const autoSendEmail = async (invoice, invoiceNumber) => {
-    if (emailSent || isSendingEmail) return;
-    
-    setIsSendingEmail(true);
+  // Auto-send email countdown and trigger
+  useEffect(() => {
+    let countdownTimer;
+
+    if (autoEmailStatus === 'countdown' && invoiceData) {
+      // Start countdown
+      countdownTimer = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(countdownTimer);
+            // Trigger auto-send email
+            setAutoEmailStatus('sending');
+            autoSendEmailWithStatus();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+
+    return () => {
+      if (countdownTimer) clearInterval(countdownTimer);
+    };
+  }, [autoEmailStatus, invoiceData]);
+
+  const autoSendEmailWithStatus = async () => {
     try {
-      console.log('Starting auto-email process...');
-      const pdf = await generatePDF();
-      const pdfBase64 = pdf.output('datauristring').split(',')[1]; // Get base64 without data:application/pdf;base64,
+      setAutoEmailStatus('sending');
       
-      const emailData = {
-        email: 'loyqunjie@gmail.com',
-        pdfData: pdfBase64,
-        invoiceNumber: invoiceNumber || transactionDetails?.transaction_id || 'INV000001'
-      };
+      // Check if the invoice ref is available
+      if (!invoiceRef.current) {
+        throw new Error('Invoice not ready for PDF generation');
+      }
 
-      const response = await fetch('/api/send-invoice-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(emailData),
-      });
+      // Generate PDF using the existing generatePDF function
+      const pdf = await generatePDF();
+      
+      // Convert PDF to blob
+      const pdfBlob = pdf.output('blob');
+      
+      // Create FormData
+      const formData = new FormData();
+      // Use a default email or get from transaction details
+      const recipientEmail = transactionDetails?.customer_email || 'loyqunjie@gmail.com';
+      formData.append('email', recipientEmail);
+      formData.append('pdf', pdfBlob, 'invoice.pdf');
 
-      if (response.ok) {
-        setEmailSent(true);
-        console.log('Invoice email sent automatically to loyqunjie@gmail.com');
-      } else {
-        const errorData = await response.json();
-        console.error('Email sending failed:', errorData);
+      console.log('Preparing to send email...');
+
+      // Send email
+      try {
+        console.log('Attempting to send email to:', recipientEmail);
+        const response = await fetch('/api/send-invoice-email', {
+          method: 'POST',
+          body: formData,
+        });
+
+        console.log('Email send response:', response.status, response.statusText);
+
+        if (response.ok) {
+          console.log('Email sent successfully!');
+          setAutoEmailStatus('sent');
+          setEmailSent(true);
+        } else {
+          console.error('Failed to send email:', await response.text());
+          throw new Error('Failed to send email');
+        }
+      } catch (error) {
+        console.error('Error sending email:', error);
+        setAutoEmailStatus('error');
       }
     } catch (error) {
       console.error('Error auto-sending email:', error);
-      // Don't retry automatically to avoid infinite loops
-      // User can still manually download if needed
-    } finally {
-      setIsSendingEmail(false);
+      setAutoEmailStatus('error');
     }
   };
+
 
   const generatePDF = async () => {
     const element = invoiceRef.current;
@@ -391,6 +422,45 @@ export default function PaymentSuccess() {
               <span className="text-sm text-gray-600">
                 Status: <span className="font-medium text-green-600">Completed</span>
               </span>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Auto Email Status */}
+      {autoEmailStatus !== 'waiting' && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white border border-gray-200 rounded-2xl shadow-lg p-4"
+        >
+          <div className="flex items-center gap-3">
+            <Mail className="h-5 w-5 text-[#002fa7]" />
+            <div className="flex-1">
+              {autoEmailStatus === 'countdown' && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600">Auto-sending invoice email in</span>
+                  <span className="font-bold text-[#002fa7]">{countdown}s</span>
+                </div>
+              )}
+              {autoEmailStatus === 'sending' && (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin text-[#002fa7]" />
+                  <span className="text-sm text-gray-600">Sending invoice email...</span>
+                </div>
+              )}
+              {autoEmailStatus === 'sent' && (
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                  <span className="text-sm text-green-600">Invoice email sent successfully!</span>
+                </div>
+              )}
+              {autoEmailStatus === 'error' && (
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4 text-red-600" />
+                  <span className="text-sm text-red-600">Failed to send email automatically</span>
+                </div>
+              )}
             </div>
           </div>
         </motion.div>

@@ -236,7 +236,8 @@ export default function FinancialAccess({ businessData, onDataUpdate }) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="w-full px-4 xl:px-6">
+      <div className="w-full space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -256,7 +257,7 @@ export default function FinancialAccess({ businessData, onDataUpdate }) {
       </div>
 
       {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4 xl:gap-6">
         <motion.div
           variants={cardVariants}
           initial="hidden"
@@ -365,7 +366,7 @@ export default function FinancialAccess({ businessData, onDataUpdate }) {
       >
         <div className="p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-6">Available Programs</h3>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-2 gap-4 xl:gap-6">
             {financialPrograms.map((program) => {
               const Icon = program.icon;
               return (
@@ -682,6 +683,7 @@ export default function FinancialAccess({ businessData, onDataUpdate }) {
           </motion.div>
         </div>
       )}
+      </div>
     </div>
   );
 } 

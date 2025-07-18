@@ -129,9 +129,9 @@ export default function AnalyticsSection({ businessData, onDataUpdate }) {
     let cumulativePercentage = 0;
     
     return (
-      <div className="flex items-center gap-8">
-        <div className="relative w-48 h-48">
-          <svg width="192" height="192" viewBox="0 0 192 192" className="transform -rotate-90">
+      <div className="flex flex-col lg:flex-row items-center gap-6 lg:gap-8 w-full">
+        <div className="relative w-40 h-40 lg:w-48 lg:h-48 flex-shrink-0">
+          <svg width="100%" height="100%" viewBox="0 0 192 192" className="transform -rotate-90">
             <circle
               cx="96"
               cy="96"
@@ -164,15 +164,15 @@ export default function AnalyticsSection({ businessData, onDataUpdate }) {
           </svg>
         </div>
         
-        <div className="space-y-3">
+        <div className="space-y-4 flex-1 w-full lg:w-auto">
           {data.map((item, index) => (
-            <div key={index} className="flex items-center gap-3">
+            <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
               <div
-                className="w-4 h-4 rounded-full"
+                className="w-4 h-4 rounded-full flex-shrink-0"
                 style={{ backgroundColor: item.color }}
               />
-              <div>
-                <p className="font-medium text-gray-900">{item.method}</p>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-gray-900 truncate">{item.method}</p>
                 <p className="text-sm text-gray-600">
                   {formatCurrency(item.amount)} ({formatPercentage(item.percentage)})
                 </p>
@@ -185,7 +185,8 @@ export default function AnalyticsSection({ businessData, onDataUpdate }) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="w-full px-4 xl:px-6">
+      <div className="w-full space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -211,7 +212,7 @@ export default function AnalyticsSection({ businessData, onDataUpdate }) {
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-4 xl:gap-6">
         <motion.div
           variants={cardVariants}
           initial="hidden"
@@ -364,7 +365,9 @@ export default function AnalyticsSection({ businessData, onDataUpdate }) {
                 </button>
               </div>
             </div>
-            <SimpleChart data={analyticsData.dailyRevenue} type={chartType} />
+            <div className="min-h-[300px]">
+              <SimpleChart data={analyticsData.dailyRevenue} type={chartType} />
+            </div>
           </div>
         </motion.div>
 
@@ -377,7 +380,9 @@ export default function AnalyticsSection({ businessData, onDataUpdate }) {
         >
           <div className="p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-6">Payment Methods</h3>
-            <PieChartComponent data={analyticsData.paymentMethods} />
+            <div className="min-h-[300px] flex items-center justify-center">
+              <PieChartComponent data={analyticsData.paymentMethods} />
+            </div>
           </div>
         </motion.div>
       </div>
@@ -477,6 +482,7 @@ export default function AnalyticsSection({ businessData, onDataUpdate }) {
           </div>
         </div>
       </motion.div>
+      </div>
     </div>
   );
 } 
