@@ -347,88 +347,50 @@ export default function PaymentSuccess() {
           variants={cardVariants}
           initial="hidden"
           animate="visible"
-          className="bg-white border border-gray-200 rounded-3xl shadow-lg p-6"
+          className="bg-white border border-gray-200 rounded-3xl shadow-lg p-4"
         >
-          <div className="space-y-6">
-            <div className="flex items-center gap-3 mb-6">
-              <Receipt className="h-6 w-6 text-[#002fa7]" />
-              <h2 className="text-xl font-semibold text-gray-900">Transaction Details</h2>
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 mb-4">
+              <Receipt className="h-5 w-5 text-[#002fa7]" />
+              <h2 className="text-lg font-semibold text-gray-900">Transaction Details</h2>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
-                  <div className="p-2 bg-[#002fa7]/10 rounded-lg">
-                    <Receipt className="h-5 w-5 text-[#002fa7]" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Transaction ID</p>
-                    <p className="font-mono text-gray-900">{transactionDetails.transaction_id}</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
-                  <div className="p-2 bg-green-100 rounded-lg">
-                    <Calendar className="h-5 w-5 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Date & Time</p>
-                    <p className="font-medium text-gray-900">
-                      {new Date(transactionDetails.transaction_date).toLocaleString()}
-                    </p>
-                  </div>
-                </div>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                <span className="text-sm text-gray-600">Transaction ID</span>
+                <span className="font-mono text-gray-900">{transactionDetails.transaction_id}</span>
               </div>
               
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
-                  <div className="p-2 bg-purple-100 rounded-lg">
-                    <CreditCard className="h-5 w-5 text-purple-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Amount</p>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {new Intl.NumberFormat('en-MY', {
-                        style: 'currency',
-                        currency: 'MYR',
-                      }).format(transactionDetails.amount)}
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
-                  <div className="p-2 bg-orange-100 rounded-lg">
-                    <Building className="h-5 w-5 text-orange-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Payment Method</p>
-                    <p className="font-medium text-gray-900 capitalize">
-                      {transactionDetails.payment_method}
-                    </p>
-                  </div>
-                </div>
+              <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                <span className="text-sm text-gray-600">Amount</span>
+                <span className="font-medium text-gray-900">
+                  {new Intl.NumberFormat('en-MY', {
+                    style: 'currency',
+                    currency: 'MYR',
+                  }).format(transactionDetails.amount)}
+                </span>
+              </div>
+              
+              <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                <span className="text-sm text-gray-600">Date & Time</span>
+                <span className="font-medium text-gray-900">
+                  {new Date(transactionDetails.transaction_date).toLocaleString()}
+                </span>
+              </div>
+              
+              <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                <span className="text-sm text-gray-600">Payment Method</span>
+                <span className="font-medium text-gray-900 capitalize">
+                  {transactionDetails.payment_method}
+                </span>
               </div>
             </div>
             
-            <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                <span className="text-sm text-gray-600">
-                  Status: <span className="font-medium text-green-600">Completed</span>
-                </span>
-              </div>
-              {isSendingEmail && (
-                <div className="flex items-center gap-2 text-sm text-blue-600">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Sending receipt via email...</span>
-                </div>
-              )}
-              {emailSent && !isSendingEmail && (
-                <div className="flex items-center gap-2 text-sm text-green-600">
-                  <Mail className="h-4 w-4" />
-                  <span>Receipt sent via email</span>
-                </div>
-              )}
+            <div className="flex items-center gap-2 pt-3 border-t border-gray-200">
+              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+              <span className="text-sm text-gray-600">
+                Status: <span className="font-medium text-green-600">Completed</span>
+              </span>
             </div>
           </div>
         </motion.div>

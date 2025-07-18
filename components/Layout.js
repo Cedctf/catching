@@ -14,6 +14,7 @@ const Layout = ({ children, noPadding }) => {
     <>
       <Navbar isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} user={user} />
       <div className={`min-h-screen w-full flex flex-col items-center bg-white px-0 pb-8 ${noPadding ? '' : 'pt-16'} text-gray-900 overflow-hidden`}>
+    <div className="min-h-screen w-full flex flex-col items-center bg-white pb-8 pt-4 text-gray-900 overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-white z-0" />
       <div className="absolute inset-0 bg-white z-0" />
@@ -34,7 +35,7 @@ const Layout = ({ children, noPadding }) => {
       </div>
 
       {/* Main Content */}
-      <div className="relative w-full max-w-7xl mx-auto space-y-6 z-20">
+      <div className="relative w-full z-20">
         {children}
       </div>
     </div>
