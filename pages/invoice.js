@@ -141,7 +141,7 @@ export default function InvoicePage() {
   };
 
   return (
-    <div className="relative w-full max-w-7xl mx-auto px-6 py-8 space-y-6">
+    <div className="relative w-full max-w-7xl mx-auto px-6 py-8 pt-20 space-y-6">
       {/* Header */}
       <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>

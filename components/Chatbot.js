@@ -277,7 +277,7 @@ const Chatbot = () => {
         onClick={toggleChat}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
-        className="fixed bottom-4 right-4 bg-[#002fa7] text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg hover:bg-[#002fa7]/90 transition-colors"
+        className="fixed bottom-4 right-4 bg-[#002fa7] text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg hover:bg-[#002fa7]/90 transition-colors z-[100]"
       >
         <MessageSquare className="h-5 w-5" />
       </motion.button>
@@ -290,7 +290,7 @@ const Chatbot = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed bottom-4 right-20 w-[400px] h-[500px] bg-white rounded-2xl shadow-[0_4px_32px_0_rgba(60,60,60,0.08)] flex flex-col overflow-hidden z-50"
+        className="fixed bottom-4 right-20 w-[400px] h-[500px] bg-white rounded-2xl shadow-[0_4px_32px_0_rgba(60,60,60,0.08)] flex flex-col overflow-hidden z-[100]"
       >
         {isVoiceMode ? (
           <>
@@ -472,7 +472,7 @@ const Chatbot = () => {
         onClick={toggleChat}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
-        className="fixed bottom-4 right-4 bg-[#002fa7] text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg hover:bg-[#002fa7]/90 transition-colors z-50"
+        className="fixed bottom-4 right-4 bg-[#002fa7] text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg hover:bg-[#002fa7]/90 transition-colors z-[100]"
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <line x1="18" y1="6" x2="6" y2="18"></line>

@@ -102,7 +102,7 @@ export default function InvoiceDetail() {
 
   if (loading) {
     return (
-      <div className="relative w-full max-w-7xl mx-auto px-6 py-8">
+      <div className="relative w-full max-w-7xl mx-auto px-6 py-8 pt-20">
         <div className="flex items-center justify-center min-h-[400px]">
           <motion.div
             animate={{ rotate: 360 }}
@@ -116,7 +116,7 @@ export default function InvoiceDetail() {
 
   if (error) {
     return (
-      <div className="relative w-full max-w-7xl mx-auto px-6 py-8">
+      <div className="relative w-full max-w-7xl mx-auto px-6 py-8 pt-20">
         <div className="flex items-center justify-center min-h-[400px]">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -148,7 +148,7 @@ export default function InvoiceDetail() {
   const mergedData = getMergedData();
 
   return (
-    <div className="relative w-full max-w-7xl mx-auto px-6 py-8 space-y-6">
+    <div className="relative w-full max-w-7xl mx-auto px-6 py-8 pt-20">
       {/* Header */}
       <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="flex items-center gap-4">

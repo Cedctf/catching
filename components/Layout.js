@@ -1,20 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
-import Navbar from './Navbar';
 
 const Layout = ({ children, noPadding }) => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user] = useState({
-    name: "John Doe",
-    email: "john@example.com",
-    avatar: "JD"
-  });
-
   return (
-    <>
-      <Navbar isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} user={user} />
-      <div className={`min-h-screen w-full flex flex-col items-center bg-white px-0 pb-8 ${noPadding ? '' : 'pt-16'} text-gray-900 overflow-hidden`}>
-    <div className="min-h-screen w-full flex flex-col items-center bg-white pb-8 pt-4 text-gray-900 overflow-hidden">
+    <div className="min-h-screen w-full flex flex-col items-center bg-white text-gray-900 overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-white z-0" />
       <div className="absolute inset-0 bg-white z-0" />
@@ -35,11 +24,10 @@ const Layout = ({ children, noPadding }) => {
       </div>
 
       {/* Main Content */}
-      <div className="relative w-full z-20">
+      <div className={`relative w-full z-20 ${noPadding ? 'mt-16' : 'mt-24'} pb-8`}>
         {children}
       </div>
     </div>
-    </>
   );
 };
 

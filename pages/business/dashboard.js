@@ -43,83 +43,95 @@ export default function BusinessDashboard() {
   const [todayReport, setTodayReport] = useState(null);
   const [realtimeStatus, setRealtimeStatus] = useState('connecting');
 
+  // Fetch initial data
   useEffect(() => {
     fetchBusinessData();
   }, []);
 
   // Setup real-time connection
   useEffect(() => {
-    if (!businessData) return; // Wait for initial data to load
+    let eventSource;
 
-    const eventSource = new EventSource('/api/business/realtime');
+    const connectEventSource = () => {
+      eventSource = new EventSource('/api/business/realtime');
 
-    eventSource.onopen = () => {
-      setRealtimeStatus('connected');
-    };
+      eventSource.onopen = () => {
+        setRealtimeStatus('connected');
+      };
 
-    eventSource.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      
-      switch (data.type) {
-        case 'transaction':
-          // Update transactions and analytics
-          setBusinessData(prev => {
-            const newTransactions = [data.transaction, ...(prev?.transactions || [])];
-            const newRevenue = (prev?.analytics?.revenue?.total || 0) + data.transaction.amount;
-            const newTransactionCount = (prev?.analytics?.transactions?.total || 0) + 1;
-            
-            return {
-              ...prev,
-              transactions: newTransactions,
-              analytics: {
-                ...prev?.analytics,
-                revenue: {
-                  ...prev?.analytics?.revenue,
-                  total: newRevenue
-                },
-                transactions: {
-                  ...prev?.analytics?.transactions,
-                  total: newTransactionCount
+      eventSource.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        
+        setBusinessData(prev => {
+          if (!prev) return prev;
+
+          switch (data.type) {
+            case 'transaction': {
+              const newTransactions = [data.transaction, ...(prev.transactions || [])];
+              const newRevenue = (prev.analytics?.revenue?.total || 0) + data.transaction.amount;
+              const newTransactionCount = (prev.analytics?.transactions?.total || 0) + 1;
+              
+              return {
+                ...prev,
+                transactions: newTransactions,
+                analytics: {
+                  ...prev.analytics,
+                  revenue: {
+                    ...prev.analytics?.revenue,
+                    total: newRevenue
+                  },
+                  transactions: {
+                    ...prev.analytics?.transactions,
+                    total: newTransactionCount
+                  }
                 }
-              }
-            };
-          });
-          break;
-
-        case 'invoice':
-          // Update invoices
-          setBusinessData(prev => ({
-            ...prev,
-            invoices: [data.invoice, ...(prev?.invoices || [])],
-            analytics: {
-              ...prev?.analytics,
-              invoices: {
-                ...prev?.analytics?.invoices,
-                total: (prev?.analytics?.invoices?.total || 0) + 1
-              }
+              };
             }
-          }));
-          break;
-      }
+
+            case 'invoice': {
+              return {
+                ...prev,
+                invoices: [data.invoice, ...(prev.invoices || [])],
+                analytics: {
+                  ...prev.analytics,
+                  invoices: {
+                    ...prev.analytics?.invoices,
+                    total: (prev.analytics?.invoices?.total || 0) + 1
+                  }
+                }
+              };
+            }
+
+            default:
+              return prev;
+          }
+        });
+      };
+
+      eventSource.onerror = () => {
+        setRealtimeStatus('disconnected');
+        eventSource.close();
+        // Try to reconnect after 5 seconds
+        setTimeout(connectEventSource, 5000);
+      };
     };
 
-    eventSource.onerror = () => {
-      setRealtimeStatus('disconnected');
-      eventSource.close();
-      // Try to reconnect after 5 seconds
-      setTimeout(() => {
-        setRealtimeStatus('connecting');
-      }, 5000);
-    };
+    if (businessData) {
+      connectEventSource();
+    }
 
     return () => {
-      eventSource.close();
+      if (eventSource) {
+        eventSource.close();
+      }
     };
-  }, [businessData]);
+  }, [businessData !== null]); // Only reconnect when businessData changes from null to non-null
 
   // Handle data updates from child components
   const handleDataUpdate = (newData) => {
-    setBusinessData(newData);
+    if (JSON.stringify(newData) !== JSON.stringify(businessData)) {
+      setBusinessData(newData);
+    }
   };
 
   // Generate today's sales report
@@ -214,9 +226,9 @@ export default function BusinessDashboard() {
       const data = await response.json();
       setBusinessData(data);
       setNotifications(data.notifications || []);
-      setLoading(false);
     } catch (error) {
       console.error('Error fetching business data:', error);
+    } finally {
       setLoading(false);
     }
   };
@@ -254,26 +266,24 @@ export default function BusinessDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          className="w-8 h-8 border-2 border-[#002fa7] border-t-transparent rounded-full"
-        />
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center mt-16">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            className="w-8 h-8 border-2 border-[#002fa7] border-t-transparent rounded-full"
+          />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pt-16">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
+      <header className="bg-white border-b border-gray-200 sticky top-16 z-30">
         <div className="max-w-[1400px] mx-auto px-10">
           <div className="flex items-center justify-between h-12">
-            <div>
-              <h1 className="text-lg font-bold text-gray-900">
-                {businessData?.businessName || 'Business Dashboard'}
-              </h1>
+        <div>
+              <h1 className="text-lg font-bold text-gray-900">Business Dashboard</h1>
             </div>
             
             <div className="flex items-center space-x-3">
@@ -289,14 +299,14 @@ export default function BusinessDashboard() {
                 </button>
               </div>
             </div>
-          </div>
-        </div>
+              </div>
+            </div>
       </header>
 
       <div className="max-w-[1400px] mx-auto p-10">
         <div className="flex relative">
           {/* Permanent Compact Sidebar */}
-          <div className="fixed left-0 top-0 bottom-0 w-16 bg-white border-r border-gray-200 z-40">
+          <div className="fixed left-0 top-16 bottom-0 w-16 bg-white border-r border-gray-200 z-40">
             <div className="h-full flex flex-col py-4">
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -321,12 +331,12 @@ export default function BusinessDashboard() {
                 })}
               </nav>
             </div>
-          </div>
+        </div>
 
           {/* Sidebar Overlay */}
           <AnimatePresence>
             {sidebarOpen && (
-              <motion.div
+          <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -339,7 +349,7 @@ export default function BusinessDashboard() {
           {/* Full Sidebar Navigation */}
           <AnimatePresence>
             {sidebarOpen && (
-              <motion.div
+          <motion.div
                 initial={{ x: -300, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 exit={{ x: -300, opacity: 0 }}
@@ -380,8 +390,8 @@ export default function BusinessDashboard() {
                               className="ml-auto"
                             >
                               <ArrowRight className="h-4 w-4" />
-                            </motion.div>
-                          )}
+          </motion.div>
+        )}
                         </button>
                       );
                     })}
@@ -394,7 +404,7 @@ export default function BusinessDashboard() {
           {/* Main Content */}
           <div className="flex-1 min-h-screen transition-all duration-300 pl-16">
             <AnimatePresence mode="wait">
-              <motion.div
+      <motion.div
                 key={activeTab}
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -414,7 +424,7 @@ export default function BusinessDashboard() {
             </AnimatePresence>
           </div>
         </div>
-      </div>
+        </div>
     </div>
   );
 }

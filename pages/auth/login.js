@@ -29,6 +29,18 @@ export default function LoginPage() {
     password: ''
   });
 
+  const setLoginState = () => {
+    // Save login state and user data
+    localStorage.setItem('isLoggedIn', 'true');
+    localStorage.setItem('user', JSON.stringify({
+      name: "John Doe",
+      email: formData.email || "john@example.com",
+      avatar: "JD"
+    }));
+    // Force a page reload to update the navbar
+    window.location.href = '/business/dashboard';
+  };
+
   const startCamera = async () => {
     try {
       setCameraError(null);
@@ -74,7 +86,7 @@ export default function LoginPage() {
           setScanStatus('success');
           setTimeout(() => {
             setIsLoading(false);
-            router.push('/business/dashboard');
+            setLoginState();
           }, 1000);
           return 100;
         }
@@ -92,7 +104,7 @@ export default function LoginPage() {
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       if (formData.email && formData.password) {
-        router.push('/business/dashboard');
+        setLoginState();
       } else {
         throw new Error('Invalid credentials');
       }
@@ -121,7 +133,7 @@ export default function LoginPage() {
   }, [loginMethod]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4 pt-20">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

@@ -99,7 +99,7 @@ const SettingsPage = () => {
   }
 
   return (
-    <div className="relative w-full max-w-7xl mx-auto px-6 py-8">
+    <div className="relative w-full max-w-7xl mx-auto px-6 py-8 pt-20">
       <div className="flex gap-8">
         {/* Sidebar Navigation */}
         <div className="w-64 shrink-0">
