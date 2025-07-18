@@ -3,6 +3,9 @@ import { Poppins } from "next/font/google";
 import { HelpCircle } from "lucide-react";
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from './LanguageSwitcher';
+import { ScrollText } from 'lucide-react';
+import { useRouter } from 'next/router';
+
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -30,7 +33,7 @@ export default function Navbar({ isLoggedIn, setIsLoggedIn, user, onStartTutoria
                 className="flex items-center gap-2 text-gray-600 hover:text-[#002fa7] font-medium transition-colors group"
                 title="Start Tutorial"
               >
-                <HelpCircle className="h-5 w-5 group-hover:text-[#002fa7] transition-colors" />
+                <ScrollText className="h-5 w-5 group-hover:text-[#002fa7] transition-colors" />
                 <span className="hidden sm:inline">{t('nav.tutorial') || 'Tutorial'}</span>
               </button>
             )}

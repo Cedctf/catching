@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
 import OnboardingTutorial from './OnboardingTutorial';
 import { getStepsForPage } from '../lib/tutorialSteps';
+import { ScrollText } from 'lucide-react';
 
 const TutorialContext = createContext();
 
