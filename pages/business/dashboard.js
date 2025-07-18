@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -26,6 +27,7 @@ import AnalyticsCard from '../../components/AnalyticsCard';
 import SimpleBarChart from '../../components/SimpleBarChart';
 
 export default function BusinessDashboard() {
+  const { t } = useTranslation();
   const [transactions, setTransactions] = useState([]);
   const [invoices, setInvoices] = useState([]);
   const [analytics, setAnalytics] = useState(null);
@@ -149,7 +151,7 @@ export default function BusinessDashboard() {
       {/* Header */}
       <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Business Dashboard</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{t('business.dashboard')}</h1>
           <p className="text-gray-600">Monitor your business performance and transactions</p>
         </div>
         <div className="flex items-center gap-3">
@@ -195,7 +197,7 @@ export default function BusinessDashboard() {
               </div>
             </div>
             <div className="space-y-1">
-              <h3 className="text-sm font-medium text-gray-600">Total Revenue</h3>
+              <h3 className="text-sm font-medium text-gray-600">{t('business.revenue')}</h3>
               <p className="text-2xl font-bold text-gray-900">{formatCurrency(analytics.revenue?.total || 0)}</p>
             </div>
           </motion.div>
@@ -241,7 +243,7 @@ export default function BusinessDashboard() {
               </div>
             </div>
             <div className="space-y-1">
-              <h3 className="text-sm font-medium text-gray-600">Transactions</h3>
+              <h3 className="text-sm font-medium text-gray-600">{t('business.transactions')}</h3>
               <p className="text-2xl font-bold text-gray-900">{analytics.transactions?.total || 0}</p>
             </div>
           </motion.div>
@@ -329,7 +331,7 @@ export default function BusinessDashboard() {
       >
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">Recent Transactions</h3>
+            <h3 className="text-lg font-semibold text-gray-900">{t('dashboard.recentTransactions')}</h3>
             <Link href="/business/transactions" className="text-[#002fa7] hover:text-[#002fa7]/80 font-medium text-sm">
               View All
             </Link>
