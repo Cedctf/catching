@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { Inter, Poppins } from "next/font/google";
@@ -9,8 +8,6 @@ import {
   FaceRecognitionIcon, 
   QRCodeIcon, 
   InvoiceIcon,
-  SecurityIcon,
-  VerifiedIcon 
 } from "../components/FeatureIcons";
 
 const inter = Inter({
@@ -27,7 +24,7 @@ const poppins = Poppins({
 
 export default function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState({
+  const [user] = useState({
     name: "John Doe",
     email: "john@example.com",
     avatar: "JD"
