@@ -52,7 +52,7 @@ export default function Home() {
         {/* Main Content Container */}
         <div className="bg-white"> {/* Removed -mt-2 */}
           {/* Hero Section */}
-          <section className="h-screen bg-white"> {/* Changed to h-screen and removed calc */}
+          <section className="h-screen bg-white mt-[-160px]"> {/* Changed to h-screen and removed calc */}
             <ScrollExpandMedia
               mediaType="image"
               mediaSrc="/face.png"

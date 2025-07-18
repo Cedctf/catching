@@ -32,7 +32,10 @@ export default function Navbar({ isLoggedIn, setIsLoggedIn, user }) {
                   {t('nav.signup')}
                 </button>
                 <button 
-                  onClick={() => setIsLoggedIn(true)}
+                  onClick={() => {
+                    localStorage.setItem('isLoggedIn', 'true');
+                    setIsLoggedIn(true);
+                  }}
                   className="bg-[#002fa7] text-white px-6 py-2 rounded-full font-medium hover:bg-[#002fa7]/90 transition-all duration-300"
                 >
                   {t('nav.login')}
@@ -57,7 +60,10 @@ export default function Navbar({ isLoggedIn, setIsLoggedIn, user }) {
                     </div>
                   </Link>
                   <button 
-                    onClick={() => setIsLoggedIn(false)}
+                    onClick={() => {
+                      localStorage.removeItem('isLoggedIn');
+                      setIsLoggedIn(false);
+                    }}
                     className="text-gray-600 hover:text-gray-900 text-sm transition-colors"
                   >
                     {t('nav.logout')}

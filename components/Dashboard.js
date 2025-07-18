@@ -144,8 +144,34 @@ const Dashboard = () => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [datePickerPosition, setDatePickerPosition] = useState({ top: 0, right: 0 });
+  const [error, setError] = useState(null);
 
   const router = useRouter();
+
+  useEffect(() => {
+    // Check if user is logged in (for demo, we'll use localStorage)
+    const isLoggedIn = localStorage.getItem('isLoggedIn');
+    if (!isLoggedIn) {
+      setError('Please log in to view your dashboard');
+      router.push('/'); // Redirect to home page
+    }
+  }, [router]);
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">{error}</p>
+          <button 
+            onClick={() => router.push('/')}
+            className="bg-[#002fa7] text-white px-6 py-2 rounded-full hover:bg-[#002fa7]/90"
+          >
+            Go to Home
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // Handle date range change
   const handleDateRangeChange = (e) => {
