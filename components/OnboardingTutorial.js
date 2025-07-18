@@ -18,10 +18,41 @@ const OnboardingTutorial = ({ run, setRun, steps = [], onComplete }) => {
     }
   }, []);
 
+  // Handle tutorial start with custom scrolling
+  useEffect(() => {
+    if (run && steps.length > 0 && steps[0].target === '.features-grid') {
+      // For landing page, scroll to features section when tutorial starts
+      setTimeout(() => {
+        const featuresElement = document.querySelector('.features-grid');
+        if (featuresElement) {
+          featuresElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+            inline: 'nearest'
+          });
+        }
+      }, 300);
+    }
+  }, [run, steps]);
+
   const handleJoyrideCallback = (data) => {
-    const { action, index, status, type } = data;
+    const { action, index, status, type, step } = data;
 
     if ([EVENTS.STEP_AFTER, EVENTS.TARGET_NOT_FOUND].includes(type)) {
+      // Handle custom scrolling for landing page features section
+      if (step && step.target === '.features-grid') {
+        // Wait for scroll expansion animation to complete
+        setTimeout(() => {
+          const featuresElement = document.querySelector('.features-grid');
+          if (featuresElement) {
+            featuresElement.scrollIntoView({
+              behavior: 'smooth',
+              block: 'center',
+              inline: 'nearest'
+            });
+          }
+        }, 500);
+      }
       setStepIndex(index + (action === ACTIONS.PREV ? -1 : 1));
     } else if ([STATUS.FINISHED, STATUS.SKIPPED].includes(status)) {
       setRun(false);
@@ -119,7 +150,9 @@ const OnboardingTutorial = ({ run, setRun, steps = [], onComplete }) => {
         callback={handleJoyrideCallback}
         continuous={true}
         run={run}
-        scrollToFirstStep={true}
+        scrollToFirstStep={false}
+        scrollOffset={120}
+        scrollDuration={500}
         showProgress={true}
         showSkipButton={true}
         steps={steps}
@@ -131,6 +164,14 @@ const OnboardingTutorial = ({ run, setRun, steps = [], onComplete }) => {
         hideCloseButton={false}
         spotlightClicks={true}
         spotlightPadding={4}
+        floaterProps={{
+          disableAnimation: false,
+          styles: {
+            floater: {
+              filter: 'drop-shadow(0 0 3px rgba(0, 0, 0, 0.5))'
+            }
+          }
+        }}
       />
       
       {/* Custom Skip/Remind Later Modal */}
