@@ -1,10 +1,9 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import GlobalLanguageSwitcher from './GlobalLanguageSwitcher';
 
-const Layout = ({ children }) => {
+const Layout = ({ children, noPadding }) => {
   return (
-    <div className="min-h-screen w-full flex flex-col items-center bg-white px-4 sm:px-6 md:px-8 pb-8 pt-28 text-gray-900 overflow-hidden">
+    <div className="min-h-screen w-full flex flex-col items-center bg-white text-gray-900 overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-white z-0" />
       <div className="absolute inset-0 bg-white z-0" />
@@ -24,11 +23,8 @@ const Layout = ({ children }) => {
         />
       </div>
 
-      {/* Global Language Switcher - Available on ALL pages */}
-      <GlobalLanguageSwitcher />
-
       {/* Main Content */}
-      <div className="relative w-full max-w-7xl mx-auto space-y-6 z-20">
+      <div className={`relative w-full z-20 ${noPadding ? 'mt-16' : 'mt-24'} pb-8`}>
         {children}
       </div>
     </div>
