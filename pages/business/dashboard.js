@@ -76,7 +76,7 @@ export default function BusinessDashboard() {
               <p className="text-gray-600">Doe's Bakery</p>
             </div>
             <Link href="/" className="text-blue-600 hover:text-blue-800">
-              ← Back to Home
+              Back to Home
             </Link>
           </div>
         </div>
@@ -176,14 +176,16 @@ export default function BusinessDashboard() {
             </div>
 
             {/* Daily Revenue Chart */}
-            <SimpleBarChart
-              title="Daily Revenue (Last 7 Days)"
-              data={analytics.dailyRevenue.map(day => ({
-                label: new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' }),
-                value: day.revenue
-              }))}
-              formatValue={formatCurrency}
-            />
+            <div className="mb-8">
+              <SimpleBarChart
+                title="Daily Revenue (Last 7 Days)"
+                data={analytics.dailyRevenue.map(day => ({
+                  label: new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' }),
+                  value: day.revenue
+                }))}
+                formatValue={formatCurrency}
+              />
+            </div>
           </>
         )}
 
