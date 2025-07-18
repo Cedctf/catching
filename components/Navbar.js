@@ -18,7 +18,7 @@ export default function Navbar({ isLoggedIn, setIsLoggedIn, user }) {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <Link href="/" className="hover:opacity-80 transition-opacity">
-              <h1 className="text-2xl font-black text-[#002fa7] font-poppins tracking-tight">PayID</h1>
+            <h1 className="text-2xl font-black text-[#002fa7] font-poppins tracking-tight">PayID</h1>
             </Link>
           </div>
           <nav className="flex items-center space-x-6">
@@ -52,12 +52,12 @@ export default function Navbar({ isLoggedIn, setIsLoggedIn, user }) {
                 <LanguageSwitcher />
                 <div className="flex items-center space-x-3">
                   <Link href="/dashboard" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
-                    <div className="w-8 h-8 bg-[#002fa7] rounded-full flex items-center justify-center">
-                      <span className="text-white text-sm font-medium">{user.avatar}</span>
-                    </div>
-                    <div className="text-sm">
-                      <div className="font-medium text-gray-900">{user.name}</div>
-                    </div>
+                  <div className="w-8 h-8 bg-[#002fa7] rounded-full flex items-center justify-center">
+                    <span className="text-white text-sm font-medium">{user.avatar}</span>
+                  </div>
+                  <div className="text-sm">
+                    <div className="font-medium text-gray-900">{user.name}</div>
+                  </div>
                   </Link>
                   <button 
                     onClick={() => {
