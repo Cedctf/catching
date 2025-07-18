@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import { Inter } from 'next/font/google';
+import { useTranslation } from 'react-i18next';
 
 const inter = Inter({
   variable: '--font-inter',
@@ -8,6 +9,8 @@ const inter = Inter({
 });
 
 export default function Hero() {
+  const { t } = useTranslation();
+  
   return (
     <div className={`${inter.variable} relative h-full flex items-center`}>
       {/* Main Content */}
@@ -17,24 +20,23 @@ export default function Hero() {
           <div className="space-y-8">
             <div className="space-y-4">
               <h1 className="text-[80px] font-black text-gray-900 leading-none tracking-tight">
-                The Future of<br />
-                <span className="text-[#002fa7]">Digital Payments</span>
+                {t('hero.title')}<br />
+                <span className="text-[#002fa7]">{t('hero.titleHighlight')}</span>
               </h1>
             </div>
             
             <div className="max-w-xl">
               <p className="text-xl text-gray-600">
-                Experience seamless, secure payments with face recognition and QR code technology. 
-                Fast, reliable, and built for the modern world.
+                {t('hero.subtitle')}
               </p>
             </div>
             
             <div className="flex items-center space-x-6">
               <button className="bg-[#002fa7] text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-[#002fa7]/90 transition-all">
-                Get Started →
+                {t('hero.getStarted')}
               </button>
               <button className="text-gray-700 border border-gray-200 px-8 py-4 rounded-full text-lg font-semibold hover:bg-gray-50 transition-all">
-                Learn More
+                {t('hero.learnMore')}
               </button>
             </div>
           </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import MoneyFlowChart from './MoneyFlowChart';
 import { 
@@ -131,6 +132,7 @@ const getTransactionIcon = (type) => {
 };
 
 const Dashboard = () => {
+  const { t } = useTranslation();
   const [showBalances, setShowBalances] = useState(true);
   const [activeTab, setActiveTab] = useState('wallets');
   const [searchTerm, setSearchTerm] = useState('');
@@ -280,7 +282,7 @@ const Dashboard = () => {
       {/* Header */}
       <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{t('dashboard.title')}</h1>
           <p className="text-gray-600">Manage your wallets and transactions</p>
         </div>
         <div className="flex items-center gap-3">
@@ -305,7 +307,7 @@ const Dashboard = () => {
           className="col-span-8 p-6 rounded-3xl bg-white border border-gray-200 shadow-lg"
         >
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">My Balance</h2>
+            <h2 className="text-lg font-semibold text-gray-900">{t('dashboard.totalBalance')}</h2>
             <div className="flex items-center gap-2">
               <select className="bg-white border border-gray-200 rounded-xl text-sm text-gray-700 px-3 py-1 focus:outline-none focus:ring-2 focus:ring-[#002fa7]/30">
                 <option>This Month</option>
@@ -334,7 +336,7 @@ const Dashboard = () => {
                 <div className="p-2 bg-[#002fa7]/10 rounded-xl">
                   <ArrowDownLeft className="h-5 w-5 text-[#002fa7]" />
                 </div>
-                <span className="text-sm font-medium text-gray-900">Income</span>
+                <span className="text-sm font-medium text-gray-900">{t('dashboard.monthlyIncome')}</span>
                 <div className="ml-auto px-2 py-1 rounded-md bg-green-100 text-green-600 flex items-center gap-1">
                   <ArrowUpRight className="h-3 w-3" />
                   <span className="text-xs">45.2%</span>
@@ -351,7 +353,7 @@ const Dashboard = () => {
                 <div className="p-2 bg-red-100 rounded-xl">
                   <ArrowUpRight className="h-5 w-5 text-red-500" />
                 </div>
-                <span className="text-sm font-medium text-gray-900">Expenses</span>
+                <span className="text-sm font-medium text-gray-900">{t('dashboard.monthlyExpenses')}</span>
                 <div className="ml-auto px-2 py-1 rounded-md bg-red-100 text-red-500 flex items-center gap-1">
                   <ArrowDownLeft className="h-3 w-3" />
                   <span className="text-xs">12.8%</span>
@@ -383,7 +385,7 @@ const Dashboard = () => {
           className="h-24 flex flex-col items-center justify-center gap-2 bg-[#002fa7] hover:bg-[#002fa7]/90 rounded-2xl transition-all duration-200 text-white font-semibold shadow-lg hover:shadow-[#002fa7]/20"
         >
           <Send className="h-6 w-6" />
-          <span>Send Money</span>
+          <span>{t('dashboard.sendMoney')}</span>
         </motion.button>
         <motion.button 
           whileHover={{ 
@@ -434,11 +436,11 @@ const Dashboard = () => {
       >
         <div className="flex border-b border-gray-200 px-4">
           <button onClick={() => setActiveTab('wallets')} className={`py-4 px-4 text-sm font-medium transition-colors duration-200 relative ${activeTab === 'wallets' ? 'text-[#002fa7]' : 'text-gray-600 hover:text-gray-900'}`}>
-            Wallets & Accounts
+            {t('dashboard.walletsAccounts')}
             {activeTab === 'wallets' && <motion.div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#002fa7]" layoutId="underline" />}
           </button>
           <button onClick={() => setActiveTab('transactions')} className={`py-4 px-4 text-sm font-medium transition-colors duration-200 relative ${activeTab === 'transactions' ? 'text-[#002fa7]' : 'text-gray-600 hover:text-gray-900'}`}>
-            Recent Transactions
+            {t('dashboard.recentTransactions')}
             {activeTab === 'transactions' && <motion.div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#002fa7]" layoutId="underline" />}
           </button>
         </div>

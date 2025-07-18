@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { Poppins } from "next/font/google";
+import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from './LanguageSwitcher';
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -8,6 +10,8 @@ const poppins = Poppins({
 });
 
 export default function Navbar({ isLoggedIn, setIsLoggedIn, user }) {
+  const { t } = useTranslation();
+  
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -16,28 +20,29 @@ export default function Navbar({ isLoggedIn, setIsLoggedIn, user }) {
             <h1 className="text-2xl font-black text-[#002fa7] font-poppins tracking-tight">PayID</h1>
           </div>
           <nav className="flex items-center space-x-6">
+            <LanguageSwitcher />
             {!isLoggedIn ? (
               <>
                 <button 
                   onClick={() => setIsLoggedIn(true)}
                   className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
                 >
-                  SIGN UP
+                  {t('nav.signup')}
                 </button>
                 <button 
                   onClick={() => setIsLoggedIn(true)}
                   className="bg-[#002fa7] text-white px-6 py-2 rounded-full font-medium hover:bg-[#002fa7]/90 transition-all duration-300"
                 >
-                  LOGIN →
+                  {t('nav.login')}
                 </button>
               </>
             ) : (
               <div className="flex items-center space-x-6">
                 <Link href="/payment/start" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">
-                  Pay Now
+                  {t('nav.payNow')}
                 </Link>
                 <Link href="/business/dashboard" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">
-                  Business
+                  {t('nav.business')}
                 </Link>
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 bg-[#002fa7] rounded-full flex items-center justify-center">
@@ -50,7 +55,7 @@ export default function Navbar({ isLoggedIn, setIsLoggedIn, user }) {
                     onClick={() => setIsLoggedIn(false)}
                     className="text-gray-600 hover:text-gray-900 text-sm transition-colors"
                   >
-                    Logout
+                    {t('nav.logout')}
                   </button>
                 </div>
               </div>
