@@ -129,6 +129,26 @@
       "status": "paid",
       "created_at": "2025-07-18T08:03:12.795Z",
       "weekday": "Friday"
+    },
+    {
+      "user_identity_token": "demo_user_token",
+      "business_identity_token": "demo_business_token",
+      "invoice_number": "INV20250014",
+      "amount": 2,
+      "due_date": "2025-07-25",
+      "status": "paid",
+      "created_at": "2025-07-18T08:50:31.907Z",
+      "weekday": "Friday"
+    },
+    {
+      "user_identity_token": "demo_user_token",
+      "business_identity_token": "demo_business_token",
+      "invoice_number": "INV20250015",
+      "amount": 5,
+      "due_date": "2025-07-25",
+      "status": "paid",
+      "created_at": "2025-07-18T11:58:09.361Z",
+      "weekday": "Friday"
     }
   ]
 }

@@ -2,77 +2,89 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  TrendingUp, 
-  TrendingDown, 
-  DollarSign, 
-  FileText, 
-  Users, 
+  Home,
+  User,
   CreditCard,
-  Calendar,
-  MoreVertical,
-  ArrowUpRight,
-  ArrowDownLeft,
-  CheckCircle,
-  Clock,
-  AlertCircle,
+  FileText,
+  BarChart3,
+  Shield,
+  Wallet,
+  Users,
   Settings,
   Bell,
-  Plus,
-  X,
-  Share2,
-  Download
+  Building2,
+  CheckCircle,
+  AlertCircle,
+  Clock,
+  ArrowRight,
+  Menu,
+  X
 } from 'lucide-react';
-import AnalyticsCard from '../../components/AnalyticsCard';
-import SimpleBarChart from '../../components/SimpleBarChart';
+
+// Import components (we'll create these)
+import BusinessOverview from '../../components/dashboard/BusinessOverview';
+import ProfileManagement from '../../components/dashboard/ProfileManagement';
+import PaymentServices from '../../components/dashboard/PaymentServices';
+import InvoicingModule from '../../components/dashboard/InvoicingModule';
+import AnalyticsSection from '../../components/dashboard/AnalyticsSection';
+import ComplianceTracker from '../../components/dashboard/ComplianceTracker';
+import FinancialAccess from '../../components/dashboard/FinancialAccess';
+import TeamManagement from '../../components/dashboard/TeamManagement';
+import SecuritySettings from '../../components/dashboard/SecuritySettings';
 
 export default function BusinessDashboard() {
-  const [transactions, setTransactions] = useState([]);
-  const [invoices, setInvoices] = useState([]);
-  const [analytics, setAnalytics] = useState(null);
+  const [activeTab, setActiveTab] = useState('overview');
+  const [businessData, setBusinessData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [showQRModal, setShowQRModal] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    fetchDashboardData();
+    fetchBusinessData();
   }, []);
 
-  const fetchDashboardData = async () => {
+  // Close sidebar when clicking outside on mobile
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (sidebarOpen && !event.target.closest('.sidebar') && !event.target.closest('.menu-button')) {
+        setSidebarOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [sidebarOpen]);
+
+  const fetchBusinessData = async () => {
     try {
-      const [transactionsRes, invoicesRes, analyticsRes] = await Promise.all([
-        fetch('/api/business/transactions'),
-        fetch('/api/business/invoices'),
-        fetch('/api/business/analytics')
-      ]);
-
-      const transactionsData = await transactionsRes.json();
-      const invoicesData = await invoicesRes.json();
-      const analyticsData = await analyticsRes.json();
-
-      setTransactions(transactionsData.transactions || []);
-      setInvoices(invoicesData.invoices || []);
-      setAnalytics(analyticsData.analytics || null);
-      
+      const response = await fetch('/api/business/dashboard');
+      const data = await response.json();
+      setBusinessData(data);
+      setNotifications(data.notifications || []);
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
+      console.error('Error fetching business data:', error);
       setLoading(false);
     }
   };
 
-  const formatCurrency = (amount) => {
-    const numAmount = Number(amount) || 0;
-    return new Intl.NumberFormat('en-MY', {
-      style: 'currency',
-      currency: 'MYR',
-    }).format(numAmount);
-  };
+  const tabs = [
+    { id: 'overview', label: 'Overview', icon: Home, component: BusinessOverview },
+    { id: 'profile', label: 'Profile', icon: User, component: ProfileManagement },
+    { id: 'payments', label: 'Payments', icon: CreditCard, component: PaymentServices },
+    { id: 'invoicing', label: 'Invoicing', icon: FileText, component: InvoicingModule },
+    { id: 'analytics', label: 'Analytics', icon: BarChart3, component: AnalyticsSection },
+    { id: 'compliance', label: 'Compliance', icon: Shield, component: ComplianceTracker },
+    { id: 'financial', label: 'Financial Access', icon: Wallet, component: FinancialAccess },
+    { id: 'team', label: 'Team', icon: Users, component: TeamManagement },
+    { id: 'security', label: 'Security', icon: Settings, component: SecuritySettings }
+  ];
 
-  const formatPercentage = (value) => {
-    const numValue = Number(value) || 0;
-    return `${numValue.toFixed(1)}%`;
-  };
+  const ActiveComponent = tabs.find(tab => tab.id === activeTab)?.component;
 
+  // Helper function to format date
   const formatDate = (dateString) => {
+    if (!dateString) return '';
     return new Date(dateString).toLocaleDateString('en-MY', {
       year: 'numeric',
       month: 'short',
@@ -80,418 +92,155 @@ export default function BusinessDashboard() {
     });
   };
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'completed': return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'pending': return <Clock className="h-4 w-4 text-yellow-500" />;
-      case 'failed': return <AlertCircle className="h-4 w-4 text-red-500" />;
-      default: return null;
-    }
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    setSidebarOpen(false); // Close sidebar after selecting a tab
   };
 
-  const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'DuitNow QR Code',
-          text: 'Scan this QR code to make a payment',
-          url: window.location.origin + '/duitnowqr_whole_exported.jpg'
-        });
-      } catch (error) {
-        console.log('Error sharing:', error);
-      }
-    } else {
-      // Fallback: copy to clipboard
-      try {
-        await navigator.clipboard.writeText(window.location.origin + '/duitnowqr_whole_exported.jpg');
-        alert('QR code link copied to clipboard!');
-      } catch (error) {
-        console.log('Error copying to clipboard:', error);
-      }
-    }
-  };
-
-  const handleDownload = () => {
-    const link = document.createElement('a');
-    link.href = '/duitnowqr_whole_exported.jpg';
-    link.download = 'duitnow-qr-code.jpg';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const cardVariants = {
-    hidden: { opacity: 0, y: 50, rotateX: 15 },
-    visible: {
-      opacity: 1, y: 0, rotateX: 0,
-      transition: { duration: 0.8, ease: [0.25, 0.4, 0.25, 1] }
-    }
-  };
-
-  if (loading || !analytics) {
+  if (loading) {
     return (
-      <div className="relative w-full max-w-7xl mx-auto px-6 py-8">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-            className="w-8 h-8 border-2 border-[#002fa7] border-t-transparent rounded-full"
-          />
-        </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          className="w-8 h-8 border-2 border-[#002fa7] border-t-transparent rounded-full"
+        />
       </div>
     );
   }
 
   return (
-    <div className="relative w-full max-w-7xl mx-auto px-6 py-8 space-y-6">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Business Dashboard</h1>
-          <p className="text-gray-600">Monitor your business performance and transactions</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Link href="/invoice">
-            <motion.button 
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="flex items-center gap-2 bg-[#002fa7] hover:bg-[#002fa7]/90 text-white font-medium py-2 px-4 rounded-xl transition-colors duration-200 text-sm"
-            >
-              <Plus className="h-4 w-4" />
-              <span>Create Invoice</span>
-            </motion.button>
-          </Link>
-          <button className="flex items-center gap-2 bg-white hover:bg-gray-50 text-gray-700 font-medium py-2 px-4 rounded-xl transition-colors duration-200 border border-gray-200 text-sm">
-            <Bell className="h-4 w-4" />
-            <span>Notifications</span>
-          </button>
-          <button className="flex items-center gap-2 bg-white hover:bg-gray-50 text-gray-700 font-medium py-2 px-4 rounded-xl transition-colors duration-200 border border-gray-200 text-sm">
-            <Settings className="h-4 w-4" />
-            <span>Settings</span>
-          </button>
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center space-x-4">
+              {/* Menu Button */}
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="menu-button p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <Menu className="h-6 w-6" />
+              </button>
+              
+              <div className="p-2 bg-[#002fa7] rounded-lg">
+                <Building2 className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">
+                  {businessData?.businessName || 'Business Dashboard'}
+                </h1>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              {/* Notifications */}
+              <div className="relative">
+                <button className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors">
+                  <Bell className="h-5 w-5" />
+                  {notifications.length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      {notifications.length}
+                    </span>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </header>
 
-      {/* Analytics Overview */}
-      {analytics && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <motion.div
-            variants={cardVariants}
-            initial="hidden"
-            animate="visible"
-            className="p-6 bg-white border border-gray-200 rounded-3xl shadow-lg"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-[#002fa7]/10 rounded-xl">
-                <DollarSign className="h-6 w-6 text-[#002fa7]" />
-              </div>
-              <div className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium ${
-                analytics.revenue?.growth >= 0 ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
-              }`}>
-                {analytics.revenue?.growth >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownLeft className="h-3 w-3" />}
-                {formatPercentage(Math.abs(analytics.revenue?.growth || 0))}
-              </div>
-            </div>
-            <div className="space-y-1">
-              <h3 className="text-sm font-medium text-gray-600">Total Revenue</h3>
-              <p className="text-2xl font-bold text-gray-900">{formatCurrency(analytics.revenue?.total || 0)}</p>
-            </div>
-          </motion.div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex relative">
+          {/* Sidebar Overlay for mobile */}
+          <AnimatePresence>
+            {sidebarOpen && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+                onClick={() => setSidebarOpen(false)}
+              />
+            )}
+          </AnimatePresence>
 
-          <motion.div
-            variants={cardVariants}
-            initial="hidden"
-            animate="visible"
-            className="p-6 bg-white border border-gray-200 rounded-3xl shadow-lg"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-green-100 rounded-xl">
-                <FileText className="h-6 w-6 text-green-600" />
-              </div>
-              <div className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium ${
-                analytics.invoices?.growth >= 0 ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
-              }`}>
-                {analytics.invoices?.growth >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownLeft className="h-3 w-3" />}
-                {formatPercentage(Math.abs(analytics.invoices?.growth || 0))}
-              </div>
-            </div>
-            <div className="space-y-1">
-              <h3 className="text-sm font-medium text-gray-600">Total Invoices</h3>
-              <p className="text-2xl font-bold text-gray-900">{analytics.invoices?.total || 0}</p>
-            </div>
-          </motion.div>
+          {/* Sidebar Navigation */}
+          <AnimatePresence>
+            {sidebarOpen && (
+              <motion.div
+                initial={{ x: -300, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: -300, opacity: 0 }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                className="sidebar fixed left-0 top-0 h-full w-80 bg-white shadow-xl z-50 lg:relative lg:w-64 lg:shadow-sm border-r border-gray-200"
+              >
+                <div className="p-4 border-b border-gray-200 lg:hidden">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-semibold text-gray-900">Menu</h2>
+                    <button
+                      onClick={() => setSidebarOpen(false)}
+                      className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
+                </div>
 
-          <motion.div
-            variants={cardVariants}
-            initial="hidden"
-            animate="visible"
-            className="p-6 bg-white border border-gray-200 rounded-3xl shadow-lg"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-purple-100 rounded-xl">
-                <CreditCard className="h-6 w-6 text-purple-600" />
-              </div>
-              <div className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium ${
-                analytics.transactions?.growth >= 0 ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
-              }`}>
-                {analytics.transactions?.growth >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownLeft className="h-3 w-3" />}
-                {formatPercentage(Math.abs(analytics.transactions?.growth || 0))}
-              </div>
-            </div>
-            <div className="space-y-1">
-              <h3 className="text-sm font-medium text-gray-600">Transactions</h3>
-              <p className="text-2xl font-bold text-gray-900">{analytics.transactions?.total || 0}</p>
-            </div>
-          </motion.div>
+                <nav className="p-4 space-y-2">
+                  {tabs.map((tab) => {
+                    const Icon = tab.icon;
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => handleTabChange(tab.id)}
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                          activeTab === tab.id
+                            ? 'bg-[#002fa7] text-white shadow-lg'
+                            : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                        }`}
+                      >
+                        <Icon className="h-5 w-5" />
+                        {tab.label}
+                        {activeTab === tab.id && (
+                          <motion.div
+                            layoutId="activeTab"
+                            className="ml-auto"
+                          >
+                            <ArrowRight className="h-4 w-4" />
+                          </motion.div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </nav>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-          <motion.div
-            variants={cardVariants}
-            initial="hidden"
-            animate="visible"
-            className="p-6 bg-white border border-gray-200 rounded-3xl shadow-lg"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-orange-100 rounded-xl">
-                <Users className="h-6 w-6 text-orange-600" />
-              </div>
-              <div className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-600">
-                <ArrowUpRight className="h-3 w-3" />
-                {formatPercentage(analytics.successRate || 0)}
-              </div>
-            </div>
-            <div className="space-y-1">
-              <h3 className="text-sm font-medium text-gray-600">Success Rate</h3>
-              <p className="text-2xl font-bold text-gray-900">{formatPercentage(analytics.successRate || 0)}</p>
-            </div>
-          </motion.div>
-        </div>
-      )}
-
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {analytics && (
-          <motion.div
-            variants={cardVariants}
-            initial="hidden"
-            animate="visible"
-            className="lg:col-span-3 bg-white border border-gray-200 rounded-3xl shadow-lg p-6"
-          >
-            <SimpleBarChart 
-              data={analytics.dailyRevenue.map(day => ({
-                label: day.fullDate,
-                value: day.revenue
-              }))} 
-              title="Daily Revenue (Last 7 Days)"
-              formatValue={formatCurrency}
-            />
-          </motion.div>
-        )}
-
-        {analytics && (
-          <motion.div
-            variants={cardVariants}
-            initial="hidden"
-            animate="visible"
-            className="lg:col-span-1 bg-white border border-gray-200 rounded-3xl shadow-lg p-6"
-          >
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900">Business QR Code</h3>
-              <div className="flex flex-col items-center space-y-3">
-                <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                  <img 
-                    src="/duitnowqr.jpg" 
-                    alt="DuitNow QR Code" 
-                    className="w-48 h-48 object-contain"
+          {/* Main Content */}
+          <div className="flex-1 min-h-screen">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+                className="w-full"
+              >
+                {ActiveComponent && (
+                  <ActiveComponent 
+                    businessData={businessData} 
+                    onDataUpdate={setBusinessData}
                   />
-                </div>
-                <div className="text-center">
-                  <button
-                    onClick={() => setShowQRModal(true)}
-                    className="text-sm text-[#002fa7] hover:text-[#002fa7]/80 font-medium underline"
-                  >
-                    Details
-                  </button>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </div>
       </div>
-
-      {/* Recent Transactions */}
-      <motion.div
-        variants={cardVariants}
-        initial="hidden"
-        animate="visible"
-        className="bg-white border border-gray-200 rounded-3xl shadow-lg"
-      >
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">Recent Transactions</h3>
-            <Link href="/business/transactions" className="text-[#002fa7] hover:text-[#002fa7]/80 font-medium text-sm">
-              View All
-            </Link>
-          </div>
-        </div>
-        <div className="p-6">
-          <div className="space-y-4">
-            {transactions.slice(0, 5).map((transaction) => (
-              <div key={transaction.transaction_id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                <div className="flex items-center gap-4">
-                  <div className="p-2 bg-white rounded-xl border border-gray-200">
-                    {getStatusIcon(transaction.transaction_status)}
-                  </div>
-                  <div>
-                    <div className="font-medium text-gray-900">
-                      {transaction.payer_identity_token ? `Payment from ${transaction.payer_identity_token.substring(0, 8)}...` : 'Anonymous Payment'}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      {formatDate(transaction.transaction_date)} • {transaction.payment_method}
-                    </div>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="font-semibold text-gray-900">{formatCurrency(transaction.amount || 0)}</div>
-                  <div className={`text-xs capitalize ${
-                    transaction.transaction_status === 'completed' ? 'text-green-600' :
-                    transaction.transaction_status === 'pending' ? 'text-yellow-600' :
-                    'text-red-600'
-                  }`}>
-                    {transaction.transaction_status}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Recent Invoices */}
-      <motion.div
-        variants={cardVariants}
-        initial="hidden"
-        animate="visible"
-        className="bg-white border border-gray-200 rounded-3xl shadow-lg"
-      >
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">Recent Invoices</h3>
-            <Link href="/invoice" className="text-[#002fa7] hover:text-[#002fa7]/80 font-medium text-sm">
-              View All
-            </Link>
-          </div>
-        </div>
-        <div className="p-6">
-          <div className="space-y-4">
-            {invoices.slice(0, 5).map((invoice) => {
-              const dueDate = new Date(invoice.due_date);
-              const isOverdue = dueDate < new Date() && invoice.status === 'pending';
-              
-              return (
-                <div key={invoice.invoice_number} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                  <div className="flex items-center gap-4">
-                    <div className="p-2 bg-white rounded-xl border border-gray-200">
-                      <FileText className={`h-4 w-4 ${
-                        invoice.status === 'paid' ? 'text-green-500' :
-                        isOverdue ? 'text-red-500' : 'text-yellow-500'
-                      }`} />
-                    </div>
-                    <div>
-                      <div className="font-medium text-gray-900">
-                        Invoice #{invoice.invoice_number}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        Due: {formatDate(invoice.due_date)}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-semibold text-gray-900">{formatCurrency(invoice.amount || 0)}</div>
-                    <div className={`text-xs capitalize ${
-                      invoice.status === 'paid' ? 'text-green-600' :
-                      isOverdue ? 'text-red-600' : 'text-yellow-600'
-                    }`}>
-                      {isOverdue ? 'Overdue' : invoice.status}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </motion.div>
-
-      {/* QR Code Modal */}
-      <AnimatePresence>
-        {showQRModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-            onClick={() => setShowQRModal(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              className="bg-white rounded-3xl shadow-xl max-w-md w-full p-6"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Modal Header */}
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-900">DuitNow QR Code</h3>
-                <button
-                  onClick={() => setShowQRModal(false)}
-                  className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
-                >
-                  <X className="h-5 w-5 text-gray-500" />
-                </button>
-              </div>
-
-              {/* QR Code Image */}
-              <div className="flex justify-center mb-6">
-                <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                  <img 
-                    src="/duitnowqr_whole_exported.jpg" 
-                    alt="DuitNow QR Code - Full" 
-                    className="w-64 h-auto object-contain"
-                  />
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex gap-3">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={handleShare}
-                  className="flex-1 flex items-center justify-center gap-2 bg-[#002fa7] hover:bg-[#002fa7]/90 text-white font-medium py-3 px-4 rounded-xl transition-colors"
-                >
-                  <Share2 className="h-4 w-4" />
-                  Share
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={handleDownload}
-                  className="flex-1 flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-4 rounded-xl transition-colors"
-                >
-                  <Download className="h-4 w-4" />
-                  Download
-                </motion.button>
-              </div>
-
-              {/* Instructions */}
-              <div className="mt-4 text-center">
-                <p className="text-sm text-gray-500">
-                  Scan this QR code with any participating bank or e-wallet app to make a payment
-                </p>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

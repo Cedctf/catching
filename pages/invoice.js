@@ -48,15 +48,16 @@ export default function InvoicePage() {
     applyInlineStyles(clonedElement);
     
     const canvas = await html2canvas(clonedElement, {
-      scale: 2,
+      scale: 1.5, // Reduced scale for smaller file size
       useCORS: true,
       allowTaint: true,
-      backgroundColor: '#ffffff'
+      backgroundColor: '#ffffff',
+      quality: 0.8 // Reduced quality for smaller file size
     });
     
     document.body.removeChild(clonedElement);
     
-    const imgData = canvas.toDataURL('image/png');
+    const imgData = canvas.toDataURL('image/jpeg', 0.8); // Use JPEG with 80% quality
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
@@ -71,7 +72,7 @@ export default function InvoicePage() {
     const imgX = (pdfWidth - imgWidth * ratio) / 2;
     const imgY = 30;
     
-    pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+    pdf.addImage(imgData, 'JPEG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
     
     return pdf;
   };
@@ -115,13 +116,17 @@ export default function InvoicePage() {
       });
 
       if (response.ok) {
+        const result = await response.json();
         setMessage('Invoice sent successfully!');
+        console.log('Email sent:', result);
       } else {
-        throw new Error('Failed to send email');
+        const errorData = await response.json();
+        console.error('API Error:', errorData);
+        throw new Error(errorData.message || 'Failed to send email');
       }
     } catch (error) {
       console.error('Error sending email:', error);
-      setMessage('Error sending email. Please try again.');
+      setMessage(`Error sending email: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
