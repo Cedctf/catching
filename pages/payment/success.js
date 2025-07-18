@@ -39,7 +39,7 @@ export default function PaymentSuccess() {
       const response = await fetch(`/api/payment/details?txnId=${transactionId}`);
       if (response.ok) {
         const data = await response.json();
-        setTransactionDetails(data);
+        setTransactionDetails(data.transaction); // Fix: access the transaction object
         
         if (data.invoiceNumber) {
           await fetchInvoiceData(data.invoiceNumber);
@@ -162,7 +162,7 @@ export default function PaymentSuccess() {
     setIsDownloading(true);
     try {
       const pdf = await generatePDF();
-      pdf.save(`invoice-${transactionDetails?.invoiceNumber || 'receipt'}.pdf`);
+      pdf.save(`receipt-${transactionDetails?.transaction_id || 'transaction'}.pdf`);
     } catch (error) {
       console.error('Error downloading PDF:', error);
     } finally {
@@ -198,7 +198,7 @@ export default function PaymentSuccess() {
         invoiceMeta: {
           type: '01 - Invoice',
           version: '1.0',
-          code: transactionDetails?.invoiceNumber || 'INV000001',
+          code: transactionDetails?.transaction_id || 'INV000001',
           uid: '123456789-2024-4017344',
           refNo: 'Not Applicable',
           dateTime: new Date().toLocaleString('en-GB', { 
@@ -218,8 +218,24 @@ export default function PaymentSuccess() {
             second: '2-digit' 
           })
         },
-        items: [],
-        summary: {},
+        items: [
+          {
+            classification: 'O35',
+            description: 'Payment Transaction',
+            quantity: 1,
+            unitPrice: transactionDetails?.amount || 0,
+            amount: transactionDetails?.amount || 0,
+            disc: '-',
+            taxRate: '0.00%',
+            taxAmount: 0,
+            totalInclTax: transactionDetails?.amount || 0,
+          }
+        ],
+        summary: {
+          totalExclTax: transactionDetails?.amount || 0,
+          taxAmount: 0,
+          totalInclTax: transactionDetails?.amount || 0,
+        },
         digitalSignature: '9e83e05bbf9b8dbac0deeec3bce6cba983f6dc50531c7a919f28d5fb369etc3',
         qrCodeUrl: '',
         notes: '',
@@ -401,9 +417,27 @@ export default function PaymentSuccess() {
         </Link>
       </div>
 
-      {/* Invoice Preview (Hidden) */}
+      {/* Invoice Preview */}
+      {transactionDetails && (
+        <motion.div
+          variants={cardVariants}
+          initial="hidden"
+          animate="visible"
+          className="bg-white border border-gray-200 rounded-3xl shadow-lg p-6"
+        >
+          <div className="flex items-center gap-3 mb-6">
+            <FileText className="h-6 w-6 text-[#002fa7]" />
+            <h2 className="text-xl font-semibold text-gray-900">Invoice</h2>
+          </div>
+          <div ref={invoiceRef}>
+            <EInvoice {...getInvoiceProps()} />
+          </div>
+        </motion.div>
+      )}
+
+      {/* Hidden Invoice for PDF Generation */}
       <div className="hidden">
-        <div ref={invoiceRef}>
+        <div>
           <EInvoice {...getInvoiceProps()} />
         </div>
       </div>

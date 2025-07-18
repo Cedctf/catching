@@ -155,6 +155,30 @@
       "weekday": "Friday",
       "payment_method": "FACE",
       "transaction_status": "completed"
+    },
+    {
+      "transaction_id": "txn-1752825406538-6jyu8lt71",
+      "payer_identity_token": "demo_user_token",
+      "receiver_identity_token": "demo_business_token",
+      "business_identity_token": "demo_business_token",
+      "transaction_type": "payment",
+      "amount": 3,
+      "transaction_date": "2025-07-18T07:56:46.539Z",
+      "weekday": "Friday",
+      "payment_method": "FACE",
+      "transaction_status": "completed"
+    },
+    {
+      "transaction_id": "txn-1752825792794-mxypb5pdv",
+      "payer_identity_token": "demo_user_token",
+      "receiver_identity_token": "demo_business_token",
+      "business_identity_token": "demo_business_token",
+      "transaction_type": "payment",
+      "amount": 2,
+      "transaction_date": "2025-07-18T08:03:12.795Z",
+      "weekday": "Friday",
+      "payment_method": "FACE",
+      "transaction_status": "completed"
     }
   ]
 }

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -17,7 +17,10 @@ import {
   AlertCircle,
   Settings,
   Bell,
-  Plus
+  Plus,
+  X,
+  Share2,
+  Download
 } from 'lucide-react';
 import AnalyticsCard from '../../components/AnalyticsCard';
 import SimpleBarChart from '../../components/SimpleBarChart';
@@ -27,6 +30,7 @@ export default function BusinessDashboard() {
   const [invoices, setInvoices] = useState([]);
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showQRModal, setShowQRModal] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
@@ -83,6 +87,37 @@ export default function BusinessDashboard() {
       case 'failed': return <AlertCircle className="h-4 w-4 text-red-500" />;
       default: return null;
     }
+  };
+
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'DuitNow QR Code',
+          text: 'Scan this QR code to make a payment',
+          url: window.location.origin + '/duitnowqr_whole_exported.jpg'
+        });
+      } catch (error) {
+        console.log('Error sharing:', error);
+      }
+    } else {
+      // Fallback: copy to clipboard
+      try {
+        await navigator.clipboard.writeText(window.location.origin + '/duitnowqr_whole_exported.jpg');
+        alert('QR code link copied to clipboard!');
+      } catch (error) {
+        console.log('Error copying to clipboard:', error);
+      }
+    }
+  };
+
+  const handleDownload = () => {
+    const link = document.createElement('a');
+    link.href = '/duitnowqr_whole_exported.jpg';
+    link.download = 'duitnow-qr-code.jpg';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const cardVariants = {
@@ -270,7 +305,12 @@ export default function BusinessDashboard() {
                   />
                 </div>
                 <div className="text-center">
-                  <p className="text-sm text-gray-500">Scan to pay</p>
+                  <button
+                    onClick={() => setShowQRModal(true)}
+                    className="text-sm text-[#002fa7] hover:text-[#002fa7]/80 font-medium underline"
+                  >
+                    Details
+                  </button>
                 </div>
               </div>
             </div>
@@ -380,6 +420,78 @@ export default function BusinessDashboard() {
           </div>
         </div>
       </motion.div>
+
+      {/* QR Code Modal */}
+      <AnimatePresence>
+        {showQRModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+            onClick={() => setShowQRModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              className="bg-white rounded-3xl shadow-xl max-w-md w-full p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-gray-900">DuitNow QR Code</h3>
+                <button
+                  onClick={() => setShowQRModal(false)}
+                  className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
+                >
+                  <X className="h-5 w-5 text-gray-500" />
+                </button>
+              </div>
+
+              {/* QR Code Image */}
+              <div className="flex justify-center mb-6">
+                <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                  <img 
+                    src="/duitnowqr_whole_exported.jpg" 
+                    alt="DuitNow QR Code - Full" 
+                    className="w-64 h-auto object-contain"
+                  />
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleShare}
+                  className="flex-1 flex items-center justify-center gap-2 bg-[#002fa7] hover:bg-[#002fa7]/90 text-white font-medium py-3 px-4 rounded-xl transition-colors"
+                >
+                  <Share2 className="h-4 w-4" />
+                  Share
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleDownload}
+                  className="flex-1 flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-4 rounded-xl transition-colors"
+                >
+                  <Download className="h-4 w-4" />
+                  Download
+                </motion.button>
+              </div>
+
+              {/* Instructions */}
+              <div className="mt-4 text-center">
+                <p className="text-sm text-gray-500">
+                  Scan this QR code with any participating bank or e-wallet app to make a payment
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
