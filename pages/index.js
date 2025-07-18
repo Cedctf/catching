@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Inter, Poppins } from "next/font/google";
 import { useTranslation } from 'react-i18next';
 import Navbar from "../components/Navbar";
+import { useTutorial } from "../components/TutorialProvider";
 import ScrollExpandMedia from "../components/scroll-expansion-hero";
 import { FlippingCard } from "../components/flipping-card";
 import { 
@@ -25,6 +26,7 @@ const poppins = Poppins({
 
 export default function Home() {
   const { t } = useTranslation();
+  const { startTutorial } = useTutorial();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user] = useState({
     name: "John Doe",
@@ -56,12 +58,12 @@ export default function Home() {
   return (
     <div className={`${inter.variable} ${poppins.variable} font-sans bg-white`}>
       {/* Navbar */}
-      <Navbar isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} user={user} />
+      <Navbar isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} user={user} onStartTutorial={startTutorial} />
 
       {/* Main Content Container */}
       <div className="bg-white">
         {/* Hero Section */}
-        <section className="h-screen bg-white">
+        <section className="hero-section h-screen bg-white">
           <ScrollExpandMedia
             mediaType="image"
             mediaSrc="/face.png"
@@ -79,7 +81,7 @@ export default function Home() {
             <h2 className="text-4xl font-bold text-center mb-12">
               {t('features.title')}
             </h2>
-            <div className="grid md:grid-cols-3 gap-6 mb-16 place-items-center justify-center max-w-6xl mx-auto">
+            <div className="features-grid grid md:grid-cols-3 gap-6 mb-16 place-items-center justify-center max-w-6xl mx-auto">
               {features.map((feature, index) => (
                 <FlippingCard
                   key={index}
@@ -107,13 +109,13 @@ export default function Home() {
             </div>
             
             {/* Demo CTA */}
-            <div className="text-center max-w-3xl mx-auto">
+            <div className="demo-section text-center max-w-3xl mx-auto">
               <h3 className="text-2xl font-bold mb-4">{t('demo.title')}</h3>
               <p className="text-lg text-gray-600 mb-6">
                 {t('demo.description')}
               </p>
               <Link href="/payment/start">
-                <button className="bg-gradient-to-r from-[#002fa7] to-purple-600 text-white px-6 py-3 rounded-full text-lg font-semibold hover:from-[#002fa7]/90 hover:to-purple-700 transition-all transform hover:scale-105">
+                <button className="pay-now-btn bg-gradient-to-r from-[#002fa7] to-purple-600 text-white px-6 py-3 rounded-full text-lg font-semibold hover:from-[#002fa7]/90 hover:to-purple-700 transition-all transform hover:scale-105">
                   {t('demo.startButton')}
                 </button>
               </Link>

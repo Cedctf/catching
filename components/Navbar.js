@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Poppins } from "next/font/google";
+import { HelpCircle } from "lucide-react";
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from './LanguageSwitcher';
 
@@ -9,7 +10,7 @@ const poppins = Poppins({
   weight: ["400", "500", "600", "700", "800", "900"],
 });
 
-export default function Navbar({ isLoggedIn, setIsLoggedIn, user }) {
+export default function Navbar({ isLoggedIn, setIsLoggedIn, user, onStartTutorial }) {
   const { t } = useTranslation();
   
   return (
@@ -21,6 +22,19 @@ export default function Navbar({ isLoggedIn, setIsLoggedIn, user }) {
           </div>
           <nav className="flex items-center space-x-6">
             <LanguageSwitcher />
+            
+            {/* Tutorial Button */}
+            {onStartTutorial && (
+              <button
+                onClick={onStartTutorial}
+                className="flex items-center gap-2 text-gray-600 hover:text-[#002fa7] font-medium transition-colors group"
+                title="Start Tutorial"
+              >
+                <HelpCircle className="h-5 w-5 group-hover:text-[#002fa7] transition-colors" />
+                <span className="hidden sm:inline">{t('nav.tutorial') || 'Tutorial'}</span>
+              </button>
+            )}
+            
             {!isLoggedIn ? (
               <>
                 <button 

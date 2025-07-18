@@ -25,6 +25,8 @@ import {
 } from 'lucide-react';
 import AnalyticsCard from '../../components/AnalyticsCard';
 import SimpleBarChart from '../../components/SimpleBarChart';
+import OnboardingTutorial from '../../components/OnboardingTutorial';
+import { getStepsForPage } from '../../lib/tutorialSteps';
 
 export default function BusinessDashboard() {
   const { t } = useTranslation();
@@ -33,6 +35,8 @@ export default function BusinessDashboard() {
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showQRModal, setShowQRModal] = useState(false);
+  const [runTutorial, setRunTutorial] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     fetchDashboardData();
@@ -124,6 +128,14 @@ export default function BusinessDashboard() {
     document.body.removeChild(link);
   };
 
+  const startTutorial = () => {
+    setRunTutorial(true);
+  };
+
+  const handleTutorialComplete = () => {
+    console.log('Tutorial completed!');
+  };
+
   const cardVariants = {
     hidden: { opacity: 0, y: 50, rotateX: 15 },
     visible: {
@@ -149,7 +161,7 @@ export default function BusinessDashboard() {
   return (
     <div className="relative w-full max-w-7xl mx-auto px-6 py-8 space-y-6">
       {/* Header */}
-      <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <header className="dashboard-header flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">{t('business.dashboard')}</h1>
           <p className="text-gray-600">Monitor your business performance and transactions</p>
@@ -159,7 +171,7 @@ export default function BusinessDashboard() {
             <motion.button 
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="flex items-center gap-2 bg-[#002fa7] hover:bg-[#002fa7]/90 text-white font-medium py-2 px-4 rounded-xl transition-colors duration-200 text-sm"
+              className="create-invoice-btn flex items-center gap-2 bg-[#002fa7] hover:bg-[#002fa7]/90 text-white font-medium py-2 px-4 rounded-xl transition-colors duration-200 text-sm"
             >
               <Plus className="h-4 w-4" />
               <span>Create Invoice</span>
@@ -178,7 +190,7 @@ export default function BusinessDashboard() {
 
       {/* Analytics Overview */}
       {analytics && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="analytics-cards grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <motion.div
             variants={cardVariants}
             initial="hidden"
@@ -278,7 +290,7 @@ export default function BusinessDashboard() {
             variants={cardVariants}
             initial="hidden"
             animate="visible"
-            className="lg:col-span-3 bg-white border border-gray-200 rounded-3xl shadow-lg p-6"
+            className="revenue-chart lg:col-span-3 bg-white border border-gray-200 rounded-3xl shadow-lg p-6"
           >
             <SimpleBarChart 
               data={analytics.dailyRevenue.map(day => ({
@@ -296,7 +308,7 @@ export default function BusinessDashboard() {
             variants={cardVariants}
             initial="hidden"
             animate="visible"
-            className="lg:col-span-1 bg-white border border-gray-200 rounded-3xl shadow-lg p-6"
+            className="qr-code-section lg:col-span-1 bg-white border border-gray-200 rounded-3xl shadow-lg p-6"
           >
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-gray-900">Business QR Code</h3>
@@ -327,7 +339,7 @@ export default function BusinessDashboard() {
         variants={cardVariants}
         initial="hidden"
         animate="visible"
-        className="bg-white border border-gray-200 rounded-3xl shadow-lg"
+        className="recent-transactions bg-white border border-gray-200 rounded-3xl shadow-lg"
       >
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
@@ -375,7 +387,7 @@ export default function BusinessDashboard() {
         variants={cardVariants}
         initial="hidden"
         animate="visible"
-        className="bg-white border border-gray-200 rounded-3xl shadow-lg"
+        className="recent-invoices bg-white border border-gray-200 rounded-3xl shadow-lg"
       >
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
@@ -498,6 +510,21 @@ export default function BusinessDashboard() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Tutorial Component */}
+      <OnboardingTutorial
+        run={runTutorial}
+        setRun={setRunTutorial}
+        steps={getStepsForPage('/business/dashboard')}
+        onComplete={handleTutorialComplete}
+      />
     </div>
   );
 }
+
+// Export the tutorial function for external access
+BusinessDashboard.startTutorial = () => {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('startTutorial'));
+  }
+};
